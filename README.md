@@ -1,0 +1,2 @@
+# decentreward
+Decentralize twitter rewards
