@@ -1,0 +1,6 @@
+artifacts
+chainlink
+node_modules
+.env
+cache
+
