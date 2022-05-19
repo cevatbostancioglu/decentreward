@@ -4,4 +4,4 @@ source config.sh
 
 set -x
 
-npx hardhat run scripts/deploy.js --network kovan
+npx hardhat run scripts/deploy.js --network $NETWORK_NAME

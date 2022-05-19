@@ -11,6 +11,7 @@
   "license": "ISC",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "chai": "^4.3.6",
     "ethereum-waffle": "^3.4.4",
@@ -18,7 +19,19 @@
     "hardhat": "^2.9.3"
   },
   "dependencies": {
+    "@chakra-ui/react": "^1.8.8",
+    "@emotion/react": "^11.9.0",
+    "@emotion/styled": "^11.8.1",
+    "@usedapp/core": "^1.0.1",
+    "axios": "^0.27.2",
     "dotenv": "^16.0.0",
-    "mocha": "^9.2.2"
+    "mocha": "^9.2.2",
+    "node-json-db": "^1.5.0",
+    "passport-twitter": "^1.0.4",
+    "react-twitter-login": "^1.5.0",
+    "request": "^2.88.2",
+    "twit": "^2.2.11",
+    "twitter-autohook": "^1.7.2",
+    "util": "^0.12.4"
   }
 }
