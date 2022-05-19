@@ -1,6 +1,6 @@
 // https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-followers-ids
 const axios = require("axios");
-console.log(require('dotenv').config({path: './.env.twitter'}));
+require('dotenv').config({path: './.env.twitter'});
 
 const oAuthConfig = {
     consumer_key:         process.env.TWITTER_CONSUMER_KEY,

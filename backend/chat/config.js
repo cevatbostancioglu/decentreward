@@ -1,4 +1,4 @@
-console.log(require('dotenv').config({path: './.env.twitter'}));
+require('dotenv').config({path: './.env.twitter'});
 
 module.exports = {
     consumer_key:         process.env.TWITTER_CONSUMER_KEY,

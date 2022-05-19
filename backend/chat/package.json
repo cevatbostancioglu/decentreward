@@ -1,0 +1,46 @@
+{
+  "name": "chat",
+  "version": "1.0.0",
+  "description": "twitter chat bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cevatbostancioglu/decentreward.git"
+  },
+  "keywords": [
+    "twitter",
+    "bot",
+    "crypto",
+    "smartcontracts",
+    "decent"
+  ],
+  "author": "Cevat Bostancioglu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cevatbostancioglu/decentreward/issues"
+  },
+  "homepage": "https://github.com/cevatbostancioglu/decentreward#readme",
+  "dependencies": {
+    "@chainlink/external-adapter": "^0.2.3",
+    "ethereumjs-util": "^7.1.4",
+    "sha3": "^2.1.4",
+    "twit": "^2.2.11",
+    "twitter-api-v2": "^1.12.0",
+    "web3": "^1.7.3"
+  },
+  "devDependencies": {
+    "body-parser": "^1.19.0",
+    "chai": "^4.2.0",
+    "eslint": "^7.0.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "express": "^4.17.0",
+    "mocha": "^7.1.2"
+  }
+}
