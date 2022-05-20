@@ -6,3 +6,4 @@ cache
 
 backend/chat/.env.twitter
 scripts/*.json
+package-lock.json
