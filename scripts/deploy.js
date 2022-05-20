@@ -1,20 +1,20 @@
 async function main() {
     const [deployer] = await ethers.getSigners();
-  
+    const fs = require('fs');
     console.log("Deploying contracts with the account:", deployer.address);
-  
+
+    const oracleContractArtifact = JSON.parse(fs.readFileSync("/home/cevat/.chainlink-kovan/decentreward/scripts/oracle-contract.json"));
+    const oracleContractAddress = JSON.parse(fs.readFileSync("/home/cevat/.chainlink-kovan/decentreward/scripts/oracle-contract-address.json"));
+    
     const DRewards = await ethers.getContractFactory("DRewards");
-    const drewards_contract = await DRewards.deploy(process.env.RINKEBY_LINK_TOKEN_CONTRACT_ADDRESS);;
-    //process.env.KOVAN_LINK_TOKEN_CONTRACT_ADDRESS
-    /*
-    if (process.env.NETWORK_NAME == "rinkeby")
-    {drewards_contract = await DRewards.deploy(process.env.RINKEBY_LINK_TOKEN_CONTRACT_ADDRESS);}
-    else 
-    {drewards_contract = await DRewards.deploy(process.env.KOVAN_LINK_TOKEN_CONTRACT_ADDRESS);}
-    */
+    
+    const drewards_contract = await DRewards.deploy(process.env.RINKEBY_LINK_TOKEN_CONTRACT_ADDRESS,
+      oracleContractAddress.name);;
+
     await drewards_contract.deployed()
 
     console.log("drewards_contract address:", drewards_contract.address);
+    console.log("oracle_contract_address:", oracleContractAddress.name);
 
     saveFrontendFiles(drewards_contract, "DRewards");
   }

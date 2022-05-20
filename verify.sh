@@ -3,10 +3,8 @@
 source config.sh
 
 set -x
-if [ "$NETWORK_NAME" = "rinkeby" ]; then
-KOVAN_LINK_TOKEN_CONTRACT_ADDRESS=RINKEBY_LINK_TOKEN_CONTRACT_ADDRESS
-else
-KOVAN_LINK_TOKEN_CONTRACT_ADDRESS=KOVAN_LINK_TOKEN_CONTRACT_ADDRESS
-fi
 
-npx hardhat verify --network ${NETWORK_NAME} $(cat scripts/contract-address.json | jq --raw-output ".name") "${KOVAN_LINK_TOKEN_CONTRACT_ADDRESS}"
+contract_address=$(cat scripts/contract-address.json | jq --raw-output ".name")
+oracle_contract_address=$(cat scripts/oracle-contract-address.json | jq --raw-output ".name")
+
+npx hardhat verify --network ${NETWORK_NAME} ${contract_address} "${RINKEBY_LINK_TOKEN_CONTRACT_ADDRESS}" "${oracle_contract_address}"

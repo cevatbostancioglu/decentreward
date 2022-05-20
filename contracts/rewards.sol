@@ -12,9 +12,19 @@ import "../openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 // VRF
 import "../chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "../chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import "../chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+
+//import "./ApiConsumer.sol";
+
 //import "../chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
-contract DRewards is Ownable {
+contract DRewards is Ownable, ChainlinkClient {
+   using Chainlink for Chainlink.Request;
+
+   // data delivery
+   bytes32 public specId = "76718198f53a4e449a569964cf900073";
+   uint256 public payment = 100000000000000000;
+
    //inherit VRFConsumerBaseV2
    //VRFCoordinatorV2Interface COORDINATOR;
    address public linkTokenAddress;
@@ -38,7 +48,7 @@ contract DRewards is Ownable {
    // The default is 3, but you can set this higher.
    uint16 requestConfirmations = 3;
 
-   uint256 latestContestID = 1;
+   uint256 public latestContestID = 1;
 
    event TransferReceived(address _from, uint _amount);
    event TransferSent(address _from, address _destAddr, uint _amount);
@@ -47,7 +57,8 @@ contract DRewards is Ownable {
    {
        CONTEST_EMPTY,
        CONTEST_CREATED, /* CONTEST ID, REWARDS, CONTEST OWNER */
-       CONTEST_CANDICATES_DELIVERED, /* candicates ids delivered */
+       CONTEST_CANDIDATES_REQUESTED, /* candidates ids requested*/
+       CONTEST_CANDIDATES_DELIVERED, /* candidates ids delivered */
        CONTEST_RANDOM_REQUESTED, /* RANDOM REQUEST */
        CONTEST_RANDOM_GENERATED, /* RANDOM GENERATED */
        CONTEST_WINNER_LOTTERY_DONE, /* WINNER ANNOUNCED */
@@ -57,18 +68,21 @@ contract DRewards is Ownable {
 
    // rewards
    struct DReward {
-      uint256 contestID;
-      address contestOwner;
-      uint256 contestWinner;
-      uint256 rewardAmount;
-      uint256 vrfRequestID;
-      uint256 randomSeed;
-      EContestState contestState;
-      uint256 rewardsDone;
-      uint256[] candicatesIDs;
+      uint256 contestID;    /* ID for indexing */
+      address contestOwner; /* eth address */
+      uint256 contestWinner;/* winnerIndex*/
+      uint256 rewardAmount; /* in eth for now*/
+      uint256 vrfRequestID; /* vrf request async handling*/
+      string  tweetID;      /* tweet id for contest      */
+      bytes32 tweetLikedByDataDeliveryRequestID; /* candidates */
+      uint256 randomSeed;   /* random seed from vrf/keccak */
+      EContestState contestState; /* state of contest */
+      uint256 rewardsDone;        /* not used. */
+      string[] candidatesIDs;     /* tweet liked by */
    }
 
-   mapping(uint256 => uint256) contestRandomTable; // requestID -> contest ID
+   mapping(uint256 => uint256) contestRandomTable;            // vrf requestID -> contest ID
+   mapping(bytes32 => uint256) candidatesIDRequestTable;      // data requestID -> contest ID 
 
     // userAddress => tokenAddress => token amount
     mapping(address => mapping (address => uint256)) userDeposits;
@@ -76,19 +90,20 @@ contract DRewards is Ownable {
    // userAdress => eth amount
    mapping(address => uint) userEthDeposits; 
 
-   // userAddress => twitterID
+   // userAddress <=> twitterID
    mapping(address => uint256) addressTwitterID;
    mapping(uint256 => address) twitterIDAdress;
 
-   constructor(address _linkTokenAddress)
+   constructor(address _link, address _oracle)
    {
-       linkTokenAddress = _linkTokenAddress;
+      linkTokenAddress = _link;
+      setChainlinkToken(_link);
+      setChainlinkOracle(_oracle);
    }
    /*constructor(uint64 subscriptionId) VRFConsumerBaseV2(vrfCoordinator) {
       COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
       s_subscriptionId = subscriptionId;
    }*/
-
 
     // ERC20 all
     event tokenDepositComplete(address tokenAddress, uint256 amount);
@@ -125,12 +140,6 @@ contract DRewards is Ownable {
       return userEthDeposits[msg.sender];
     }
 
-    function depositFakeEther(address user, uint amount) public onlyOwner
-    {
-      userEthDeposits[user] += amount;
-      emit ethDepositComplete(user, amount);
-    }
-
    function getEtherBalanceWithAdress(address user) public view returns(uint)
    {
       return userEthDeposits[user];
@@ -138,8 +147,6 @@ contract DRewards is Ownable {
 
    mapping(uint256 => DReward) contest;
    
-   event candicatesDelivered(DReward indexed contest);
-
   function setTwitterID(address userAddress, uint256 twitterID)
    public
    onlyOwner
@@ -159,9 +166,10 @@ contract DRewards is Ownable {
       return twitterIDAdress[twitterID];
    }
 
-  function u_createNewContest(uint256 rewardAmount) 
+  function u_createNewContest(uint256 rewardAmount, string memory tweetID) 
         public 
-        onlyEmptyContest(latestContestID)
+        onlyEmptyContest(latestContestID) 
+        returns(uint256)
         {
       require(rewardAmount > 0);
       /*require(userDeposits[msg.sender][linkTokenAddress] <= rewardAmount, 
@@ -169,47 +177,89 @@ contract DRewards is Ownable {
       */
       require(userEthDeposits[msg.sender] <= rewardAmount, 
          "Your reward amount must be greater then you already deposit.");
+      require(bytes(tweetID).length > 0);
+
       contest[latestContestID].contestOwner = msg.sender;
       contest[latestContestID].contestID = latestContestID;
-      contest[latestContestID].rewardAmount += rewardAmount; // sum amount
+      contest[latestContestID].tweetID = tweetID;
+      contest[latestContestID].rewardAmount += rewardAmount;
       contest[latestContestID].contestState = EContestState.CONTEST_CREATED;
       //userDeposits[msg.sender][linkTokenAddress] -= rewardAmount;
       userEthDeposits[msg.sender] -= rewardAmount;
       emit updateContestState(latestContestID, contest[latestContestID].contestState);
       
       latestContestID++;
+
+      return (latestContestID - 1);
    }
 
-   function bot_createNewContest(uint256 contestID, address contestOwner, uint256 rewardAmount) 
+   function bot_createNewContest(address contestOwner, uint256 rewardAmount, string memory tweetID) 
         public 
         onlyOwner
-        onlyEmptyContest(contestID)
+        onlyEmptyContest(latestContestID)
         {
       require(rewardAmount > 0);
       require(userEthDeposits[contestOwner] <= rewardAmount, 
          "Your reward amount must be greater then you already deposit.");
+
+      require(bytes(tweetID).length > 0);
       
-      contest[contestID].contestOwner = contestOwner;
-      contest[contestID].contestID = contestID;
-      contest[contestID].rewardAmount += rewardAmount; // sum amount
-      contest[contestID].contestState = EContestState.CONTEST_CREATED;
-      //userDeposits[contestOwner][linkTokenAddress] -= rewardAmount;
+      contest[latestContestID].contestOwner = contestOwner;
+      contest[latestContestID].contestID = latestContestID;
+      contest[latestContestID].tweetID = tweetID;
       userEthDeposits[contestOwner] -= rewardAmount;
+      contest[latestContestID].rewardAmount += rewardAmount; // sum amount
+      contest[latestContestID].contestState = EContestState.CONTEST_CREATED;
+      //userDeposits[contestOwner][linkTokenAddress] -= rewardAmount;
       latestContestID++;
 
-      emit updateContestState(contestID, contest[contestID].contestState);
+      emit updateContestState(latestContestID, contest[latestContestID].contestState);
    }
    
-   function deliverCandicates(uint256 contestID, uint256[] memory candicatesIDs) 
-        public onlyOwner
-        onlyContestState(contestID, EContestState.CONTEST_CREATED)
-    {
+   /**
+   * @notice Request variable bytes from the oracle
+   */
+   function requestTweetLikesByTweetID(uint256 contestID)
+      public
+      onlyContestState(contestID, EContestState.CONTEST_CREATED)
+   {
+      // only owner or user itself.
+      Chainlink.Request memory req = buildChainlinkRequest(specId, address(this), this.fulfillBytes.selector);
+      req.add("tweetID", contest[contestID].tweetID);
+      bytes32 reqID = sendOperatorRequest(req, payment);
+
+      candidatesIDRequestTable[reqID] = contestID;
+      contest[contestID].contestState = EContestState.CONTEST_CANDIDATES_REQUESTED;
+   }   
+
+   event RequestFulfilled(
+      bytes32 indexed requestId,
+      string[] indexed data
+   );
+
+   /**
+      * @notice Fulfillment function for variable bytes
+      * @dev This is called by the oracle. recordChainlinkFulfillment must be used.
+      */
+   function fulfillBytes(
+      bytes32 requestId,
+      string[] memory _data
+   )
+      public
+      recordChainlinkFulfillment(requestId)
+   {
+      emit RequestFulfilled(requestId, _data);
+      uint256 contestID = candidatesIDRequestTable[requestId];
+      
+      /*
       require(contestID > 0);
       require(contest[contestID].rewardAmount > 0);
-      require(candicatesIDs.length > 0);
-      
-      contest[contestID].candicatesIDs = candicatesIDs;
-      contest[contestID].contestState = EContestState.CONTEST_CANDICATES_DELIVERED;
+      require(candidatesIDs.length > 0);
+      public onlyOwner
+        onlyContestState(contestID, EContestState.CONTEST_CREATED)
+      */
+      contest[contestID].candidatesIDs = _data;
+      contest[contestID].contestState = EContestState.CONTEST_CANDIDATES_DELIVERED;
       
       emit updateContestState(contestID, contest[contestID].contestState);
    }
@@ -222,14 +272,51 @@ contract DRewards is Ownable {
    {
       return contest[contestID].rewardAmount;
    }
+
+   function getContestTwitterID(uint256 contestID)
+   public
+   view
+   onlyValidContest(contestID) 
+    returns(string memory)
+   {
+      return contest[contestID].tweetID;
+   }
    
+   function getTotalNumberOfContest()
+   public
+   view
+   returns(uint256)
+   {
+      return latestContestID;
+   }
+
+   function getRandomSeed(uint256 contestID) 
+    public 
+    view 
+    onlyValidContest(contestID) 
+    returns(uint256)
+   {
+      require(contest[contestID].contestState >= EContestState.CONTEST_RANDOM_GENERATED);
+      return contest[contestID].randomSeed;
+   }
+
+   function getContestState(uint256 contestID)
+   public
+   view
+   onlyValidContest(contestID)
+   returns(EContestState)
+   {
+      return contest[contestID].contestState;
+   }
+
    function getCandicates(uint256 contestID) 
       public 
       view 
-      onlyValidContest(contestID) 
-      returns(uint256[] memory)
+      onlyValidContest(contestID)
+      returns(string[] memory)
    {
-      return contest[contestID].candicatesIDs;
+      require(contest[contestID].contestState >= EContestState.CONTEST_CANDIDATES_DELIVERED);
+      return contest[contestID].candidatesIDs;
    }
    
    function triggerRewardDistrobution(uint256 contestID) 
@@ -237,13 +324,14 @@ contract DRewards is Ownable {
       onlyValidContest(contestID)
       onlyContestState(contestID, EContestState.CONTEST_RANDOM_GENERATED)
    {
-      uint256 winnerIndex = contest[contestID].randomSeed % contest[contestID].candicatesIDs.length;
+      // only user or owner.
+      uint256 winnerIndex = contest[contestID].randomSeed % contest[contestID].candidatesIDs.length;
       
-      require(winnerIndex <= contest[contestID].candicatesIDs.length - 1);
+      require(winnerIndex <= contest[contestID].candidatesIDs.length - 1);
       
       contest[contestID].contestState = EContestState.CONTEST_WINNER_LOTTERY_DONE;
-      contest[contestID].contestWinner = contest[contestID].candicatesIDs[winnerIndex];
-
+      //contest[contestID].candidatesIDs[winnerIndex];
+      contest[contestID].contestWinner = winnerIndex;
       emit updateContestState(contestID, contest[contestID].contestState);
    }
    
@@ -251,17 +339,28 @@ contract DRewards is Ownable {
     public
     view
     onlyValidContest(contestID)
-    onlyContestState(contestID, EContestState.CONTEST_WINNER_LOTTERY_DONE)
     returns(uint256)
     {
-        return contest[contestID].contestWinner;
+      require(contest[contestID].contestState >= EContestState.CONTEST_WINNER_LOTTERY_DONE); 
+      return contest[contestID].contestWinner;
     }
+
+    function getWinnerID2(uint256 contestID)
+    public
+    view
+    onlyValidContest(contestID)
+    returns(uint256)
+    {
+      require(contest[contestID].contestState >= EContestState.CONTEST_WINNER_LOTTERY_DONE); 
+      return contest[contestID].randomSeed % contest[contestID].candidatesIDs.length;;
+    }
+
+
     
     function getWinnerRewardAmount(uint256 contestID)
         public
         view
         onlyValidContest(contestID)
-        onlyContestState(contestID, EContestState.CONTEST_WINNER_LOTTERY_DONE)
         returns(uint256)
     {
         return contest[contestID].rewardAmount;
@@ -276,8 +375,8 @@ contract DRewards is Ownable {
         /*require(IERC20(linkTokenAddress).transfer(contestWinner, contest[contestID].rewardAmount), 
             "transfer failed.");
         */
-        contestWinner.transfer(contest[contestID].rewardAmount);
         contest[contestID].contestState = EContestState.CONTEST_END;
+        contestWinner.transfer(contest[contestID].rewardAmount);
         emit updateContestState(contestID, contest[contestID].contestState);
     }
 
@@ -287,7 +386,7 @@ contract DRewards is Ownable {
     external 
     onlyValidContest(contestID) 
     onlyOwner
-    onlyContestState(contestID, EContestState.CONTEST_CANDICATES_DELIVERED)
+    onlyContestState(contestID, EContestState.CONTEST_CANDIDATES_DELIVERED)
     { 
       contest[contestID].randomSeed = uint256(keccak256(abi.encodePacked(block.timestamp,block.difficulty, msg.sender)));
       contest[contestID].contestState = EContestState.CONTEST_RANDOM_REQUESTED; /* vrf is not available now. */
@@ -316,7 +415,7 @@ contract DRewards is Ownable {
       contest[contestRandomTable[requestID]].contestState = EContestState.CONTEST_RANDOM_GENERATED;
       emit updateContestState(contestRandomTable[requestID], contest[contestRandomTable[requestID]].contestState);
    }
-   
+
    modifier onlyEmptyContest(uint256 newContestID) {
         require(newContestID > 0);
         require(contest[newContestID].contestOwner == address(0));
@@ -335,7 +434,6 @@ contract DRewards is Ownable {
     }
     
    modifier onlyValidContest(uint256 contestID) {
-      require(contest[contestID].candicatesIDs.length > 0);
       require(contest[contestID].contestID != 0);
       require(contest[contestID].rewardAmount != 0);
       _;
