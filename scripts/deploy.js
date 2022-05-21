@@ -9,7 +9,7 @@ async function main() {
     const DRewards = await ethers.getContractFactory("DRewards");
     
     const drewards_contract = await DRewards.deploy(process.env.RINKEBY_LINK_TOKEN_CONTRACT_ADDRESS,
-      oracleContractAddress.name);;
+      oracleContractAddress.name, process.env.CHAINLINK_VRF_SUBS_ID);;
 
     await drewards_contract.deployed()
 

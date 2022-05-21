@@ -169,6 +169,19 @@ function signContestStart(tweetID)
 
 const readParametersFromContract = async function(tweetID)
 {
+  while(true)
+  {
+    let vrf_arrived = await _contract_owner.getContestState(tweetID);
+    console.log("vrf state: ", vrf_arrived);
+
+    if (vrf_arrived >= 3)
+    {
+      console.log("vrf_arrived, breaking..");
+      break;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
   let randSeed = await _contract_owner.getRandomSeed(tweetID);
   return randSeed;
 };
