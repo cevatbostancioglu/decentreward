@@ -1,5 +1,7 @@
 const { Requester, Validator } = require('@chainlink/external-adapter')
 const { tweetLikedBy } = require('./message-response');
+const { readParametersFromContract } = require('./blockchain')
+const { ipfsUpload } = require('./ipfs-put-files');
 
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
@@ -30,25 +32,36 @@ const createRequest = (input, callback) => {
   console.log(input);
   // The Validator helps you validate the Chainlink request data
   //const validator = new Validator(callback, input, customParams)
-  const jobRunID = input.id
-  const tweetID = input.data.tweetID;
-  
-  // The Requester allows API calls be retry in case of timeout
-  // or connection failure
-  tweetLikedBy(tweetID)
-    .then(response => {
-      // It's common practice to store the desired value at the top-level
-      // result key. This allows different adapters to be compatible with
-      // one another.
-      //response.data.result = Requester.validateResultNumber(response.data, [tsyms])
-      //console.log("response:", response);
-      callback(200, success(jobRunID, response));
+  const jobRunID = input.id;
+  const contestID = input.data.contestID;
+
+  readParametersFromContract(contestID)
+  .then(result => {
+    input.data["randSeed"] = result.randSeed;
+    input.data["tweetID"] = result.tweetID;
+    tweetLikedBy(result.tweetID)
+    .then(tweetliked => {
+        ipfsUpload(input, tweetliked, callback)
+          .then(response => {
+            callback(200, success(jobRunID, response));
+          })
+          .catch(error => {
+            console.log("error");
+            console.log(error);
+            callback(500, "ipfsUpload error");
+          });
     })
     .catch(error => {
       console.log("error");
       console.log(error);
-      callback(500, "Requester.errored(jobRunID, error)");
-    })
+      callback(500, "tweetApi error");
+    });
+  })
+  .catch(error => {
+    console.log("error");
+    console.log(error);
+    callback(500, "ethereum read error");
+  });
 }
 
 // This is a wrapper to allow the function to work with

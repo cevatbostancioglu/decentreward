@@ -18,7 +18,7 @@ const { verifyMessage,
     signContestStart,
     isEthAddressVerified } = require('./blockchain');
 
-console.log(require('dotenv').config({path: './.env.twitter'}));
+require('dotenv').config({path: './.env.twitter'});
 
 const oAuthConfig = {
     consumer_key:         process.env.TWITTER_CONSUMER_KEY,
@@ -94,12 +94,12 @@ const tweetLikedBy = async function(id) {
   var allIDs = [];
   for await(const user of users) 
   {
-    allIDs.push(user.id);
+    allIDs.push(user);
   }
-  uniq = [...new Set(allIDs)]; // remove duplicates
-  console.log(uniq);
+  //uniq = allIDs;//[...new Set(allIDs)]; // remove duplicates
+  console.log(allIDs);
   //console.log(allIDs.length);
-  return uniq;
+  return allIDs;
   //tweetLikedBy("1523825807243812865");
   //tweetLikedBy("1525266410012016641");
 }

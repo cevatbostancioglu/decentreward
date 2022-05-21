@@ -1,0 +1,270 @@
+{
+	"input": {
+		"data": {
+			"contestID": 1,
+			"randSeed": {
+				"type": "BigNumber",
+				"hex": "0x1699fcee"
+			},
+			"tweetID": "1527843709605187586"
+		},
+		"id": "76718198-f53a-4e44-9a56-9964cf900073",
+		"meta": {
+			"oracleRequest": {
+				"callbackAddr": "0x225D7984b17f7257579B0A86EB4c9E53F3B9be80",
+				"callbackFunctionId": "0x3e4a0ffa",
+				"cancelExpiration": "1653147800",
+				"data": "0x69636f6e74657374494401",
+				"dataVersion": "2",
+				"payment": "100000000000000000",
+				"requestId": "0xda851c8844a91b59ebe47a96bad36dabba91c7cdce43e3fe896a3024f77f33fe",
+				"requester": "0x225D7984b17f7257579B0A86EB4c9E53F3B9be80",
+				"specId": "0x3736373138313938663533613465343439613536393936346366393030303733"
+			}
+		}
+	},
+	"tweetliked": [
+		{
+			"id": "1379512730139365385",
+			"name": "BigBull",
+			"username": "BigBull01323098"
+		},
+		{
+			"id": "805575175303405568",
+			"name": "GypsyCommander",
+			"username": "gypsycommander"
+		},
+		{
+			"id": "1345172953835696132",
+			"name": "TheShillings",
+			"username": "Theshillingsb"
+		},
+		{
+			"id": "106148617",
+			"name": "Justus",
+			"username": "22Chainlink22"
+		},
+		{
+			"id": "1253374619878330374",
+			"name": "pizzagains 🍕",
+			"username": "pizzagains"
+		},
+		{
+			"id": "915880843",
+			"name": "tef ⬡⬢",
+			"username": "thedynamiclink"
+		},
+		{
+			"id": "1434405155735277573",
+			"name": "Pete McFeet",
+			"username": "pete_mcfeet"
+		},
+		{
+			"id": "1163452055454978050",
+			"name": "🔰 Linkie #CCIP",
+			"username": "ChainlinkoracIe"
+		},
+		{
+			"id": "28021742",
+			"name": "Danny Bopp",
+			"username": "dannybopp"
+		},
+		{
+			"id": "1146490211557203968",
+			"name": "JoΞ",
+			"username": "Substreight"
+		},
+		{
+			"id": "1241748083509256196",
+			"name": "J-Bigs.",
+			"username": "techsniper23"
+		},
+		{
+			"id": "1060765363825074176",
+			"name": "Lt. C⬢l. 2.0",
+			"username": "LtColLinkarski"
+		},
+		{
+			"id": "1511791692084441091",
+			"name": "AndLinkLinker",
+			"username": "LinkerAnd"
+		},
+		{
+			"id": "1381989901080616966",
+			"name": "Mike (⬡, ⬡)",
+			"username": "mikeyimp"
+		},
+		{
+			"id": "1527010274464735233",
+			"name": "₳lexander $cardanoultra",
+			"username": "45BillionCrypto"
+		},
+		{
+			"id": "1228873565153452032",
+			"name": "the.DESK",
+			"username": "theDESK9"
+		},
+		{
+			"id": "1445506343796760579",
+			"name": "Moneymaker",
+			"username": "MrMoneymaker97"
+		},
+		{
+			"id": "1151541161984778240",
+			"name": "Liberta.eth 🦇🔊",
+			"username": "ethman1616"
+		},
+		{
+			"id": "1287075196344573952",
+			"name": "Wolfgang 🦇🔊",
+			"username": "Wolfgan95484419"
+		},
+		{
+			"id": "496260371",
+			"name": "stinkylinky 2.0 CCIP",
+			"username": "bit_marine"
+		},
+		{
+			"id": "1354877227754655745",
+			"name": "Arjun",
+			"username": "Arjun_eth"
+		},
+		{
+			"id": "3239168929",
+			"name": "OregonDogami",
+			"username": "BodeenDerek"
+		},
+		{
+			"id": "1179792995488587777",
+			"name": "Katanga Uranium",
+			"username": "katanga_uranium"
+		},
+		{
+			"id": "541734227",
+			"name": "Fett The Wet",
+			"username": "Fettwithwet"
+		},
+		{
+			"id": "1199815586295033857",
+			"name": "ƊÓȠ. 2.0",
+			"username": "Don_ChainLink"
+		},
+		{
+			"id": "359515336",
+			"name": "Jesse Linkman",
+			"username": "LinkleisEinhorn"
+		},
+		{
+			"id": "1249714772645498880",
+			"name": "frens 1st, $link close 2.0",
+			"username": "linkianapolis"
+		},
+		{
+			"id": "1452661613790732291",
+			"name": "HelloThisIsME",
+			"username": "whyamiscrolling"
+		},
+		{
+			"id": "1254456593405456385",
+			"name": "FIR三 WITH CRYPTO",
+			"username": "FireWithCrypto"
+		},
+		{
+			"id": "1284708334919053313",
+			"name": "davidzhou.eth",
+			"username": "TheDavidZhou"
+		},
+		{
+			"id": "1370426676514066433",
+			"name": "chainlink cowboy",
+			"username": "Chainlinkc0wboy"
+		},
+		{
+			"id": "1411056775332200451",
+			"name": "Husker.eth @ Permissionless",
+			"username": "husker_eth"
+		},
+		{
+			"id": "345758163",
+			"name": "cozy 快適",
+			"username": "vec0zy"
+		},
+		{
+			"id": "1350970179128356866",
+			"name": "𒐪𒐪𒐪𒐪𒐪⬢42⬢ 𒐪𒐪𒐪𒐪𒐪forty-two 𒐪𒐪𒐪𒐪𒐪",
+			"username": "42Chainlink42"
+		},
+		{
+			"id": "73823877",
+			"name": "Dark Krypto Investor",
+			"username": "KryptoInvestorr"
+		},
+		{
+			"id": "825676963",
+			"name": "Bouie",
+			"username": "Bouie_22"
+		},
+		{
+			"id": "1422216505811427334",
+			"name": "ConnectedNodes",
+			"username": "MountainMercury"
+		},
+		{
+			"id": "1353120743199023106",
+			"name": "Samuel",
+			"username": "SamuelAlpha77"
+		},
+		{
+			"id": "868995747756339201",
+			"name": "Nikolas Johnson",
+			"username": "TheRealNicbuck3"
+		},
+		{
+			"id": "11484622",
+			"name": "M⟠kΞ 🦇🔊🪄",
+			"username": "MikeAbundo"
+		},
+		{
+			"id": "2757621713",
+			"name": "Trix 🧙🏾‍♂️🥷🏿",
+			"username": "BtTrey5"
+		},
+		{
+			"id": "1126955403491676160",
+			"name": "Fishy Catfish",
+			"username": "CatfishFishy"
+		},
+		{
+			"id": "972745448",
+			"name": "Jeff",
+			"username": "NavyInnovator"
+		},
+		{
+			"id": "537347089",
+			"name": "narsismo",
+			"username": "narsismo"
+		},
+		{
+			"id": "1514049813980979200",
+			"name": "Agis.eth",
+			"username": "0xAgis"
+		},
+		{
+			"id": "1225191609412792330",
+			"name": "Kokichi",
+			"username": "SatoshiMikimoto"
+		},
+		{
+			"id": "1295038677844983815",
+			"name": "Sergey A. Davis🔺🚉 Village Drunk of Goblin Town",
+			"username": "RIPTERRYADAVIS"
+		}
+	],
+	"proof_formula": "tweetliked[input.data.randSeed % tweetliked.length]",
+	"winnerIndex": 9,
+	"winnerTwitterInfo": {
+		"id": "1146490211557203968",
+		"name": "JoΞ",
+		"username": "Substreight"
+	}
+}
