@@ -5,6 +5,7 @@ pragma solidity ^0.8.7;
 // @decentrewardbot => 0x06b911ACca1000823054D9f17424198b076faF86 -> 1518535984320851968
 
 import "../openzeppelin-contracts/contracts/access/Ownable.sol";
+import "../openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import "../openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 //import "./IDPairing.sol";
@@ -19,6 +20,10 @@ import "../chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
 
 contract DRewards is Ownable, ChainlinkClient {
+	/* Safe Math */
+	using SafeMath for uint256;
+	/* End of Safe Math */
+
 	using Chainlink for Chainlink.Request;
 
 	// data delivery
@@ -96,7 +101,7 @@ contract DRewards is Ownable, ChainlinkClient {
 	mapping(string => uint256) winnerEthAmount;
 
    	// userAdress => eth amount
-   	mapping(address => uint) userEthDeposits; 
+   	mapping(address => uint256) userEthDeposits; 
 
    	// userAddress <=> twitterID
    	mapping(address => string) addressTwitterID;
@@ -135,14 +140,14 @@ contract DRewards is Ownable, ChainlinkClient {
 	  	contest[latestContestID].contestOwner = msg.sender;
 	  	contest[latestContestID].contestID = latestContestID;
 	  	contest[latestContestID].tweetID = tweetID;
-	  	userEthDeposits[msg.sender] -= rewardAmount;
-	  	contest[latestContestID].rewardAmount += rewardAmount;
+	  	userEthDeposits[msg.sender] = userEthDeposits[msg.sender].sub(rewardAmount);
+	  	contest[latestContestID].rewardAmount = contest[latestContestID].rewardAmount.add(rewardAmount);
 	  	contest[latestContestID].contestState = EContestState.CONTEST_CREATED;
-	  	//userDeposits[msg.sender][linkTokenAddress] -= rewardAmount;
+	  	//userDeposits[msg.sender][linkTokenAddress] = userDeposits[msg.sender][linkTokenAddress].sub(rewardAmount);
 		
 	  	emit updateContestState(latestContestID, contest[latestContestID].contestState);
 	  
-	  	latestContestID++;
+	  	latestContestID = latestContestID.add(1);
 
 	  	return (latestContestID - 1);
    	}
@@ -162,14 +167,14 @@ contract DRewards is Ownable, ChainlinkClient {
 	  	contest[latestContestID].contestOwner = contestOwner;
 	  	contest[latestContestID].contestID = latestContestID;
 		contest[latestContestID].tweetID = tweetID;
-		userEthDeposits[contestOwner] -= rewardAmount;
-		contest[latestContestID].rewardAmount += rewardAmount; // sum amount
+		userEthDeposits[msg.sender] = userEthDeposits[msg.sender].sub(rewardAmount);
+	  	contest[latestContestID].rewardAmount = contest[latestContestID].rewardAmount.add(rewardAmount);
 		contest[latestContestID].contestState = EContestState.CONTEST_CREATED;
-		//userDeposits[contestOwner][linkTokenAddress] -= rewardAmount;
+	  	//userDeposits[msg.sender][linkTokenAddress] = userDeposits[msg.sender][linkTokenAddress].sub(rewardAmount);
 
 		emit updateContestState(latestContestID, contest[latestContestID].contestState);
 
-		latestContestID++;
+		latestContestID = latestContestID.add(1);
 
 		return (latestContestID - 1);
    	}
@@ -183,16 +188,17 @@ contract DRewards is Ownable, ChainlinkClient {
 		// only user or owner.
 		contest[contestID].contestState = EContestState.CONTEST_WINNER_LOTTERY_DONE;
 		
-		winnerEthAmount[contest[contestID].winnerTwitterID] += contest[contestID].rewardAmount;
+		string memory _contestWinner = contest[contestID].winnerTwitterID;
+		winnerEthAmount[_contestWinner] = winnerEthAmount[_contestWinner].add(contest[contestID].rewardAmount);
 
 		emit updateContestState(contestID, contest[contestID].contestState);
    	}
 
 	// eth reward deposit
-   	event ethDepositComplete(address user, uint amount);
-	function depositEther() public payable returns(uint)
+   	event ethDepositComplete(address user, uint256 amount);
+	function depositEther() public payable returns(uint256)
 	{
-		userEthDeposits[msg.sender] += msg.value;
+		userEthDeposits[msg.sender] = userEthDeposits[msg.sender].add(msg.value);
 	  	emit ethDepositComplete(msg.sender, msg.value);
 	  	return userEthDeposits[msg.sender];
 	}
