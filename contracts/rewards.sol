@@ -54,8 +54,6 @@ contract DRewards is Ownable, ChainlinkClient {
 	uint16 requestConfirmations = 3;
 
 	// contest
-	uint256 public latestContestID = 1;
-
 	uint256 maxTwitterLikes = 1000000000; // 1e9
 
   	enum EContestState
@@ -73,12 +71,9 @@ contract DRewards is Ownable, ChainlinkClient {
 
    	// rewards
    	struct DReward {
-		uint256 contestID;    			/* ID for indexing */
-	  	
 		/* contest info */
 		address contestOwner; 			/* eth address */
 	  	uint256 rewardAmount; 			/* in eth for now*/
-		string  tweetID;      			/* tweet id for contest */
 
 		/* contest variables and proof */
 		uint256 randomSeed;   			/* random seed from vrf/keccak */
@@ -87,12 +82,11 @@ contract DRewards is Ownable, ChainlinkClient {
 		string  ipfsLocation;        	/* ipfs Location */
    	}
 	
-	mapping(uint256 => DReward) contest;
+	// TweetID for indexing and tracking
+	mapping(string => DReward) contest;
 
 	// vrf requestID -> contest ID
-   	mapping(uint256 => uint256) contestVRFRequestIDTable;
-	// data requestID -> contest ID 	
-   	mapping(bytes32 => uint256) dataRequestTable;
+   	mapping(uint256 => string) contestVRFRequestIDTable;
 
 	// userAddress => tokenAddress => token amount
    	mapping(address => mapping (address => uint256)) userDeposits;
@@ -120,13 +114,12 @@ contract DRewards is Ownable, ChainlinkClient {
 	  	s_subscriptionId = subscriptionId;
    	}*/
 
-	event updateContestState(uint256 contestID, EContestState state);
+	event updateContestState(string indexed tweetID, EContestState indexed state);
 
 	// create new contest
   	function u_createNewContest(uint256 rewardAmount, string memory tweetID) 
 		public 
-		onlyEmptyContest(latestContestID) 
-		returns(uint256)
+		onlyEmptyContest(tweetID)
 	{
 		require(rewardAmount > 0);
 	  	/*require(userDeposits[msg.sender][linkTokenAddress] <= rewardAmount, 
@@ -137,26 +130,19 @@ contract DRewards is Ownable, ChainlinkClient {
 	  	
 		require(bytes(tweetID).length > 0);
 
-	  	contest[latestContestID].contestOwner = msg.sender;
-	  	contest[latestContestID].contestID = latestContestID;
-	  	contest[latestContestID].tweetID = tweetID;
+	  	contest[tweetID].contestOwner = msg.sender;
 	  	userEthDeposits[msg.sender] = userEthDeposits[msg.sender].sub(rewardAmount);
-	  	contest[latestContestID].rewardAmount = contest[latestContestID].rewardAmount.add(rewardAmount);
-	  	contest[latestContestID].contestState = EContestState.CONTEST_CREATED;
+	  	contest[tweetID].rewardAmount = contest[tweetID].rewardAmount.add(rewardAmount);
+	  	contest[tweetID].contestState = EContestState.CONTEST_CREATED;
 	  	//userDeposits[msg.sender][linkTokenAddress] = userDeposits[msg.sender][linkTokenAddress].sub(rewardAmount);
 		
-	  	emit updateContestState(latestContestID, contest[latestContestID].contestState);
-	  
-	  	latestContestID = latestContestID.add(1);
-
-	  	return (latestContestID - 1);
+	  	emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
 
    	function bot_createNewContest(address contestOwner, uint256 rewardAmount, string memory tweetID) 
 		public 
 		onlyOwner
-		onlyEmptyContest(latestContestID)
-		returns(uint256)
+		onlyEmptyContest(tweetID)
 	{
 		require(rewardAmount > 0);
 	  	require(userEthDeposits[contestOwner] <= rewardAmount, 
@@ -164,34 +150,28 @@ contract DRewards is Ownable, ChainlinkClient {
 
 	  	require(bytes(tweetID).length > 0);
 	  
-	  	contest[latestContestID].contestOwner = contestOwner;
-	  	contest[latestContestID].contestID = latestContestID;
-		contest[latestContestID].tweetID = tweetID;
+	  	contest[tweetID].contestOwner = contestOwner;
 		userEthDeposits[msg.sender] = userEthDeposits[msg.sender].sub(rewardAmount);
-	  	contest[latestContestID].rewardAmount = contest[latestContestID].rewardAmount.add(rewardAmount);
-		contest[latestContestID].contestState = EContestState.CONTEST_CREATED;
+	  	contest[tweetID].rewardAmount = contest[tweetID].rewardAmount.add(rewardAmount);
+		contest[tweetID].contestState = EContestState.CONTEST_CREATED;
 	  	//userDeposits[msg.sender][linkTokenAddress] = userDeposits[msg.sender][linkTokenAddress].sub(rewardAmount);
 
-		emit updateContestState(latestContestID, contest[latestContestID].contestState);
-
-		latestContestID = latestContestID.add(1);
-
-		return (latestContestID - 1);
+		emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
 
 	// trigger reward distro
-   	function triggerRewardDistrobution(uint256 contestID)
+   	function triggerRewardDistrobution(string memory tweetID)
 		public
-	  	onlyValidContest(contestID)
-	  	onlyContestState(contestID, EContestState.CONTEST_PROOF_DELIVERED)
+	  	onlyValidContest(tweetID)
+	  	onlyContestState(tweetID, EContestState.CONTEST_PROOF_DELIVERED)
    	{
 		// only user or owner.
-		contest[contestID].contestState = EContestState.CONTEST_WINNER_LOTTERY_DONE;
+		contest[tweetID].contestState = EContestState.CONTEST_WINNER_LOTTERY_DONE;
 		
-		string memory _contestWinner = contest[contestID].winnerTwitterID;
-		winnerEthAmount[_contestWinner] = winnerEthAmount[_contestWinner].add(contest[contestID].rewardAmount);
+		string memory _contestWinner = contest[tweetID].winnerTwitterID;
+		winnerEthAmount[_contestWinner] = winnerEthAmount[_contestWinner].add(contest[tweetID].rewardAmount);
 
-		emit updateContestState(contestID, contest[contestID].contestState);
+		emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
 
 	// eth reward deposit
@@ -226,38 +206,40 @@ contract DRewards is Ownable, ChainlinkClient {
 	}
 
 	// withdraw reward
-	function withdrawWinnerReward(uint256 contestID, address payable contestWinner)
+	function withdrawWinnerReward(string memory tweetID, address payable contestWinner)
 		public
 		onlyOwner
-		onlyValidContest(contestID)
-		onlyContestState(contestID, EContestState.CONTEST_WINNER_LOTTERY_DONE)
+		onlyValidContest(tweetID)
+		onlyContestState(tweetID, EContestState.CONTEST_WINNER_LOTTERY_DONE)
 	{
-		/*require(IERC20(linkTokenAddress).transfer(contestWinner, contest[contestID].rewardAmount), 
+		/*require(IERC20(linkTokenAddress).transfer(contestWinner, contest[tweetID].rewardAmount), 
 			"transfer failed.");
 		*/
-		contest[contestID].contestState = EContestState.CONTEST_END;
-		string memory _winnerTwitterID = contest[contestID].winnerTwitterID;
+		require(winnerEthAmount[tweetID] > 0);
+		contest[tweetID].contestState = EContestState.CONTEST_END;
+		string memory _winnerTwitterID = contest[tweetID].winnerTwitterID;
 		contestWinner.transfer(winnerEthAmount[_winnerTwitterID]);
 		winnerEthAmount[_winnerTwitterID] = 0;
-		emit updateContestState(contestID, contest[contestID].contestState);
+		emit updateContestState(tweetID, contest[tweetID].contestState);
 	}
 
 	/**
 	* @notice Request variable bytes from the oracle
+	* @TODO: double request issue. onlyContestStateGE -> onlyContestState
 	*/
-	function requestProofFromNode(uint256 contestID)
+	function requestProofFromNode(string memory tweetID)
 		public
 		onlyOwner
-	  	onlyContestState(contestID, EContestState.CONTEST_RANDOM_GENERATED)
+	  	onlyContestStateGE(tweetID, EContestState.CONTEST_RANDOM_GENERATED)
    	{
 		// only owner or user itself.
 		Chainlink.Request memory req = buildChainlinkRequest(specId, address(this), this.fulfillBytes.selector);
-		req.addUint("contestID", contestID);
+		req.add("tweetID", tweetID);
 
-		bytes32 reqID = sendOperatorRequest(req, payment);
+		/*bytes32 reqID = */
+		sendOperatorRequest(req, payment);
 
-		dataRequestTable[reqID] = contestID;
-		contest[contestID].contestState = EContestState.CONTEST_PROOF_REQUESTED;
+		contest[tweetID].contestState = EContestState.CONTEST_PROOF_REQUESTED;
    	}   
 
 	event RequestFulfilled(
@@ -276,49 +258,48 @@ contract DRewards is Ownable, ChainlinkClient {
 		public
 	  	recordChainlinkFulfillment(requestId)
    	{
-	  	uint256 contestID = getContestIDFromDataRequest(requestId);
-
 		/*
-		require(contestID > 0);
-		require(contest[contestID].rewardAmount > 0);
+		require(tweetID > 0);
+		require(contest[tweetID].rewardAmount > 0);
 		require(candidatesIDs.length > 0);
 		public onlyOwner
-			onlyContestState(contestID, EContestState.CONTEST_CREATED)
+			onlyContestState(tweetID, EContestState.CONTEST_CREATED)
 		*/
-		contest[contestID].winnerTwitterID = _data[0];
-		contest[contestID].ipfsLocation = _data[1];
-		contest[contestID].contestState = EContestState.CONTEST_PROOF_DELIVERED;
+		string memory tweetID = _data[0];
+		contest[tweetID].winnerTwitterID = _data[1];
+		contest[tweetID].ipfsLocation = _data[2];
+		contest[tweetID].contestState = EContestState.CONTEST_PROOF_DELIVERED;
 		
-		triggerRewardDistrobution(contestID);
+		triggerRewardDistrobution(tweetID);
 
-		emit updateContestState(contestID, contest[contestID].contestState);
+		emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
 
    	// VRF
    	// Assumes the subscription is funded sufficiently.
-   	function requestRandomSeed(uint256 contestID) 
+   	function requestRandomSeed(string memory tweetID) 
 		external 
-		onlyValidContest(contestID) 
+		onlyValidContest(tweetID) 
 		onlyOwner
-		onlyContestState(contestID, EContestState.CONTEST_CREATED)
+		onlyContestState(tweetID, EContestState.CONTEST_CREATED)
 	{ 
-	  	contest[contestID].randomSeed = uint256(keccak256(abi.encodePacked(block.timestamp,block.difficulty, msg.sender))) % maxTwitterLikes;
-		contest[contestID].contestState = EContestState.CONTEST_RANDOM_REQUESTED; /* vrf is not available now. */
-		contest[contestID].contestState = EContestState.CONTEST_RANDOM_GENERATED;
+	  	contest[tweetID].randomSeed = uint256(keccak256(abi.encodePacked(block.timestamp,block.difficulty, msg.sender))) % maxTwitterLikes;
+		contest[tweetID].contestState = EContestState.CONTEST_RANDOM_REQUESTED; /* vrf is not available now. */
+		contest[tweetID].contestState = EContestState.CONTEST_RANDOM_GENERATED;
 		
-		requestProofFromNode(contestID);
+		requestProofFromNode(tweetID);
 		
-		emit updateContestState(contestID, contest[contestID].contestState);
+		emit updateContestState(tweetID, contest[tweetID].contestState);
 		/* VRF have problems.
 		// Will revert if subscription is not set and funded.
-		contest[contestID].vrfRequestID = COORDINATOR.requestRandomWords(
+		contest[tweetID].vrfRequestID = COORDINATOR.requestRandomWords(
 			keyHash,
 			s_subscriptionId,
 			requestConfirmations,
 			callbackGasLimit,
 			1
 		);
-		contestVRFRequestIDTable[contest[contestID].vrfRequestID] = contestID;
+		contestVRFRequestIDTable[contest[tweetID].vrfRequestID] = tweetID;
 		*/
    	}
 
@@ -328,10 +309,10 @@ contract DRewards is Ownable, ChainlinkClient {
    	) internal  
    	{
 		/* override */
-		uint256 contestID = getContestIDFromVRFRequest(requestID);
-		contest[contestID].randomSeed = randomWords[0];
-		contest[contestID].contestState = EContestState.CONTEST_RANDOM_GENERATED;
-		emit updateContestState(contestID, contest[contestID].contestState);
+		string memory tweetID = getContestIDFromVRFRequest(requestID);
+		contest[tweetID].randomSeed = randomWords[0];
+		contest[tweetID].contestState = EContestState.CONTEST_RANDOM_GENERATED;
+		emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
 
 	function setTwitterID(address userAddress, string memory twitterID)
@@ -362,110 +343,129 @@ contract DRewards is Ownable, ChainlinkClient {
 	function getContestIDFromVRFRequest(uint256 requestID) 
 		public
 		view
-		returns(uint256)
+		returns(string memory)
 	{
-		require(contestVRFRequestIDTable[requestID] != 0);
+		require(bytes(contestVRFRequestIDTable[requestID]).length > 0);
 		return contestVRFRequestIDTable[requestID];
 	}
 
-	function getContestIDFromDataRequest(bytes32 requestID)
-		public
-		view
-		returns(uint256)
-	{
-		require(dataRequestTable[requestID] != 0);
-		return dataRequestTable[requestID];
-	}
-
-   	function getContestTwitterID(uint256 contestID)
-		public
-		view
-		onlyValidContest(contestID) 
-		returns(string memory)
-   	{
-	  	return contest[contestID].tweetID;
-   	}
-
-   	function getRandomSeed(uint256 contestID) 
+   	function getRandomSeed(string memory tweetID) 
 		public 
 		view 
-		onlyValidContest(contestID) 
+		onlyValidContest(tweetID) 
 		returns(uint256)
    	{
-		require(contest[contestID].contestState >= EContestState.CONTEST_RANDOM_GENERATED);
-		return contest[contestID].randomSeed;
+		require(contest[tweetID].contestState >= EContestState.CONTEST_RANDOM_GENERATED);
+		return contest[tweetID].randomSeed;
    	}
 
-   	function getContestState(uint256 contestID)
+   	function getContestState(string memory tweetID)
 		public
 		view
-		onlyValidContest(contestID)
+		onlyValidContest(tweetID)
 		returns(EContestState)
    	{
-		return contest[contestID].contestState;
+		return contest[tweetID].contestState;
    	}
 
-	function getTwitterID(address userAddress) public view returns(string memory)
+	function getTwitterID(address userAddress) 
+		public 
+		view 
+		returns(string memory)
    	{
 		return addressTwitterID[userAddress];
    	}
 
-   	function getAddressFromTwitterID(string memory twitterID) public view returns(address)
+   	function getAddressFromTwitterID(string memory twitterID) 
+	   	public 
+		view 
+		returns(address)
    	{
 		return twitterIDAdress[twitterID];
    	}
 
-   	function getProofLocation(uint256 contestID) 
+   	function getProofLocation(string memory tweetID) 
 		public 
 	  	view 
-	  	onlyValidContest(contestID)
+	  	onlyValidContest(tweetID)
 	  	returns(string memory)
    	{
-		require(contest[contestID].contestState >= EContestState.CONTEST_PROOF_DELIVERED);
-		return contest[contestID].ipfsLocation;
+		require(contest[tweetID].contestState >= EContestState.CONTEST_PROOF_DELIVERED);
+		return contest[tweetID].ipfsLocation;
    	}
    
-   	function getWinnerTwitterID(uint256 contestID)
+   	function getWinnerTwitterID(string memory tweetID)
 		public
 		view
-		onlyValidContest(contestID)
+		onlyValidContest(tweetID)
 		returns(string memory)
 	{
-	  	require(contest[contestID].contestState >= EContestState.CONTEST_PROOF_DELIVERED); 
-	  	return contest[contestID].winnerTwitterID;
+	  	require(contest[tweetID].contestState >= EContestState.CONTEST_PROOF_DELIVERED); 
+	  	return contest[tweetID].winnerTwitterID;
 	}
 
-	function getContestRewardAmount(uint256 contestID)
+	function getContestRewardAmount(string memory tweetID)
 		public
 		view
-		onlyValidContest(contestID)
+		onlyValidContest(tweetID)
 		returns(uint256)
 	{
-		require(contest[contestID].contestState >= EContestState.CONTEST_CREATED);
-		require(contest[contestID].contestState <= EContestState.CONTEST_WINNER_LOTTERY_DONE);
-		return contest[contestID].rewardAmount;
+		require(contest[tweetID].contestState >= EContestState.CONTEST_CREATED);
+		require(contest[tweetID].contestState <= EContestState.CONTEST_WINNER_LOTTERY_DONE);
+		return contest[tweetID].rewardAmount;
 	}
 
-   	modifier onlyEmptyContest(uint256 newContestID) {
-		require(newContestID > 0);
+   	modifier onlyEmptyContest(string memory newContestID) {
+		require(bytes(newContestID).length > 0);
 		require(contest[newContestID].contestOwner == address(0));
 		_;
    	}
 
-   	modifier onlyContestState(uint256 contestID, EContestState state) {
-		require(contest[contestID].contestState == state);
+	// greater than
+	modifier onlyContestStateGT(string memory tweetID, EContestState state) {
+		require(bytes(tweetID).length > 0);
+		require(contest[tweetID].contestState > state);
+		_;
+	}
+
+	// greater than or equal to
+	modifier onlyContestStateGE(string memory tweetID, EContestState state) {
+		require(bytes(tweetID).length > 0);
+		require(contest[tweetID].contestState >= state);
+		_;
+	}
+
+	// equal to
+   	modifier onlyContestState(string memory tweetID, EContestState state) {
+		require(bytes(tweetID).length > 0);
+		require(contest[tweetID].contestState == state);
 		_;
    	}
-   
+
+	// less than or equal to
+	modifier onlyContestStateLE(string memory tweetID, EContestState state) {
+		require(bytes(tweetID).length > 0);
+		require(contest[tweetID].contestState < state);
+		_;
+   	}   
+
+	// less than 
+   	modifier onlyContestStateLT(string memory tweetID, EContestState state) {
+		require(bytes(tweetID).length > 0);
+		require(contest[tweetID].contestState < state);
+		_;
+   	}
+
 	modifier onlyLink(address tokenAddress)
 	{
 		require(tokenAddress == linkTokenAddress);
 		_;
 	}
 	
-   	modifier onlyValidContest(uint256 contestID) {
-		require(contest[contestID].contestID != 0);
-	  	require(contest[contestID].rewardAmount != 0);
+   	modifier onlyValidContest(string memory tweetID) {
+		require(bytes(tweetID).length > 0);
+		require(contest[tweetID].contestOwner != address(0));
+	  	require(contest[tweetID].rewardAmount != 0);
 	  	_;
    	}
 }
