@@ -167,14 +167,10 @@ function signContestStart(tweetID)
   return "ID=" + tweetID + " has been started, contest will end in 1 hour.";
 }
 
-const readParametersFromContract = async function(contestID)
+const readParametersFromContract = async function(tweetID)
 {
-  var tweetID = await _contract_owner.getContestTwitterID(contestID);
-  let randSeed = await _contract_owner.getRandomSeed(contestID);
-  var result = {};
-  result["randSeed"] = randSeed;
-  result["tweetID"] = tweetID;
-  return result;
+  let randSeed = await _contract_owner.getRandomSeed(tweetID);
+  return randSeed;
 };
 
 function readAddressDepositAmount(ethAddress)

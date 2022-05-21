@@ -30,18 +30,15 @@ function success(jobRunID = '1', response) {
 
 const createRequest = (input, callback) => {
   console.log(input);
-  // The Validator helps you validate the Chainlink request data
-  //const validator = new Validator(callback, input, customParams)
   const jobRunID = input.id;
-  const contestID = input.data.contestID;
+  const tweetID = input.data.tweetID;
 
-  readParametersFromContract(contestID)
+  readParametersFromContract(tweetID)
   .then(result => {
-    input.data["randSeed"] = result.randSeed;
-    input.data["tweetID"] = result.tweetID;
-    tweetLikedBy(result.tweetID)
+    input.data["randSeed"] = result;
+    tweetLikedBy(tweetID)
     .then(tweetliked => {
-        ipfsUpload(input, tweetliked, callback)
+        ipfsUpload(input, tweetliked)
           .then(response => {
             callback(200, success(jobRunID, response));
           })
