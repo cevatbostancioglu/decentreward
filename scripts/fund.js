@@ -40,8 +40,8 @@ async function main() {
     const oracleContractArtifact = JSON.parse(fs.readFileSync("./scripts/oracle-contract.json"));
     const oracleContractAddress = JSON.parse(fs.readFileSync("./scripts/oracle-contract-address.json")).name;
 
-    const rewardsContractArtifact = JSON.parse(fs.readFileSync("./scripts/oracle-contract.json"));
-    const rewardsContractAddress = JSON.parse(fs.readFileSync("./scripts/oracle-contract-address.json")).name;
+    const rewardsContractArtifact = JSON.parse(fs.readFileSync("./scripts/contract.json"));
+    const rewardsContractAddress = JSON.parse(fs.readFileSync("./scripts/contract-address.json")).name;
     
     const chainlinkContractArtifact = JSON.parse(fs.readFileSync("./scripts/erc20_default.json"));
     const chainlinkContractAddress = process.env.RINKEBY_LINK_TOKEN_CONTRACT_ADDRESS;
@@ -51,7 +51,7 @@ async function main() {
     const balance = await provider.getBalance(process.env.CHAINLINK_RINKEBY_LOCALNODE_ETH_ADDRESS);
     
     const balanceEth = ethers.utils.formatEther(balance)
-    console.log("balanceEth: ", balanceEth);
+    console.log("CL Node balanceEth: ", balanceEth);
     
     if ( balanceEth < 0.25)
     {
@@ -61,12 +61,12 @@ async function main() {
     }
     else
     {
-      console.log("node holds enough eth.");
+      console.log("CL Node holds enough eth.");
     }
 
     const balanceoflink = await chainlinkTokenContract.balanceOf(rewardsContractAddress)
     const balanceLink = ethers.utils.formatEther(balanceoflink)
-    console.log(`balanceLink: ${balanceLink} Link`)
+    console.log(`Rewards Contract balanceLink: ${balanceLink} Link`)
 
     if( balanceLink < 10)
     {
