@@ -1,6 +1,7 @@
-import { Image, Flex, Box, Button } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import { ReactNode } from "react";
 
+//import brandLogo from '../assets/logo2.png'
 import ToggleNightMode from './NightMode';
 
 type Props = {
@@ -10,13 +11,13 @@ type Props = {
 export function Banner( { children }: Props) {
     return (
         <header>
-            <Box d="flex" alignItems="center" justifyContent="space-between" mr={3} ml={3} w="50%">
+            <Box d="flex" alignItems="center" justifyContent="flex-start" mr={3} ml={3} w="30%">
                 
             </Box>
 
-            <Box d="flex" alignItems="center" justifyContent="end" mr={6} >
+            <Box d="flex" alignItems="center" justifyContent="end" mr={6} mt={5} w="%40" >
                 {children}
-                <ToggleNightMode  ></ToggleNightMode>
+                <ToggleNightMode ></ToggleNightMode>
                 
             </Box>
         </header>
