@@ -6,3 +6,12 @@ cache
 backend/chat/.env.twitter
 package-lock.json
 backend/chat/proofs
+cl_node/.api
+cl_node/.env.kovan
+cl_node/.env.rinkeby
+cl_node/.password
+cl_node/chainlink_debug.log
+cl_node/log.jsonl
+cl_node/secret
+secret
+chainlink_debug.log
