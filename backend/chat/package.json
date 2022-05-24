@@ -29,7 +29,8 @@
     "sha3": "^2.1.4",
     "twit": "^2.2.11",
     "twitter-api-v2": "^1.12.0",
-    "web3": "^1.7.3"
+    "web3": "^1.7.3",
+    "web3.storage": "^4.2.0"
   },
   "devDependencies": {
     "body-parser": "^1.19.0",

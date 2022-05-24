@@ -35,6 +35,137 @@ _contract_user = new ethers.Contract(
   test1
 );
 
+/* in app server */
+function success(response) {
+  return {
+    data: response,
+    statusCode: 200,
+  }
+}
+
+function successNumber(response) {
+  return {
+    data: ethers.utils.formatEther(response),
+    statusCode: 200,
+  }
+}
+
+function successString(response) {
+  return {
+    data: ethers.utils.formatEther(response).toString(),
+    statusCode: 200,
+  }
+}
+
+function errorw(response) {
+  return {
+    data: response,
+    statusCode: 500,
+  }
+}
+
+const express = require("express");
+const bodyParser = require('body-parser')
+const router = express.Router();
+const blockchain_contract_app = express();
+
+blockchain_contract_app.use(bodyParser.urlencoded({extended: false}));
+blockchain_contract_app.use(bodyParser.json())
+let port = 5000;
+
+
+router.post("/getContestState", function(req, res) {
+  _contract_owner.getContestState(req.body.tweetID)
+  .then(state => {
+    console.log("success:getContestState:", req.body.tweetID);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.status(200).json(success(state))
+  })
+  .catch(error => {
+    console.log("error: getContestState");
+    res.status(500).json(errorw(error))
+  })
+});
+
+router.post("/getContestRewardAmount", function(req, res) {
+  _contract_owner.getContestRewardAmount(req.body.tweetID)
+  .then(state => {
+    res.setHeader("Access-Control-Allow-Origin", "*")
+    res.status(200).json(success(state))
+  })
+  .catch(error => {
+    console.log("error: getContestRewardAmount");
+    res.status(500).json(errorw(error))
+  })
+});
+
+router.post("/getRewardBalanceWithTwitterID", function(req, res) {
+  _contract_owner.getRewardBalanceWithTwitterID(req.body.tweetID)
+  .then(state => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.status(200).json(success(state))
+  })
+  .catch(error => {
+    console.log("error: getRewardBalanceWithTwitterID");
+    res.status(500).json(errorw(error))
+  })
+});
+
+router.post("/getRandomSeed", function(req, res) {
+  _contract_owner.getRandomSeed(req.body.tweetID)
+  .then(state => {
+    res.setHeader("Access-Control-Allow-Origin", "*")
+    res.status(200).json(success(state))
+  })
+  .catch(error => {
+    console.log("error: getRandomSeed");
+    res.status(500).json(errorw(error))
+  })
+});
+
+router.post("/getProofLocation", function(req, res) {
+  _contract_owner.getProofLocation(req.body.tweetID)
+  .then(state => {
+    res.setHeader("Access-Control-Allow-Origin", "*")
+    res.status(200).json(success(state))
+  })
+  .catch(error => {
+    console.log("error: getProofLocation");
+    res.status(500).json(errorw(error))
+  })
+});
+
+router.post("/getEtherBalanceWithAdress", function(req, res) {
+  console.log("getEtherBalanceWithAdress:", req.body.address);
+  _contract_owner.getEtherBalanceWithAdress(req.body.address)
+  .then(state => {
+    res.setHeader("Access-Control-Allow-Origin", "*")
+    res.status(200).json(successString(state._hex))
+  })
+  .catch(error => {
+    console.log("error: getEtherBalanceWithAdress");
+    console.log(error);
+    res.status(500).json(errorw(error))
+  })
+});
+
+router.post("/getWinnerTwitterID", function(req, res) {
+  _contract_owner.getWinnerTwitterID(req.body.tweetID)
+  .then(state => {
+    res.setHeader("Access-Control-Allow-Origin", "*")
+    res.status(200).json(success(state))
+  })
+  .catch(error => {
+    console.log("error: getWinnerTwitterID");
+    res.status(500).json(errorw(error))
+  })
+});
+
+blockchain_contract_app.use("/", router);
+blockchain_contract_app.listen(port, () => console.log(`On-Chain contract listening on port ${port}!`));
+
+/* end of in app server */
+
 const getEtherBalanceWithAdress = async(ethAddress) => {
   console.log("getEtherBalanceWithAdress(" + ethAddress + ");");
   return 0.01;

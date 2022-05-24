@@ -97,8 +97,10 @@ const tweetLikedBy = async function(id) {
     allIDs.push(user);
   }
   //uniq = allIDs;//[...new Set(allIDs)]; // remove duplicates
-  console.log(allIDs);
-  //console.log(allIDs.length);
+  //console.log(allIDs);
+  
+  console.log("tweetLikedBy done, length:", allIDs.length);
+
   return allIDs;
   //tweetLikedBy("1523825807243812865");
   //tweetLikedBy("1525266410012016641");

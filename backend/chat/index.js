@@ -26,7 +26,7 @@ app.post('/', (req, res) => {
   })
 })
 
-app.listen(port, () => console.log(`Listening on port ${port}!`))
+app.listen(port, () => console.log(`External API listening on port ${port}!`))
 ////
 
 const lookUp = async (user, event) => {
