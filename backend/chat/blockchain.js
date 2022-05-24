@@ -8,11 +8,11 @@ const { isHexString, toBuffer } = require('ethereumjs-util');
 const fs = require('fs');
 const { verify } = require('crypto');
 
-require('dotenv').config({path: '/home/cevat/.chainlink-kovan/decentreward/.env'});
+require('dotenv').config({path: '../../.env'});
 require('dotenv').config({path: './.env.twitter'})
 
-const contractArtifact = JSON.parse(fs.readFileSync("/home/cevat/.chainlink-kovan/decentreward/scripts/contract.json"));
-const contractAddress = JSON.parse(fs.readFileSync("/home/cevat/.chainlink-kovan/decentreward/scripts/contract-address.json"));
+const contractArtifact = JSON.parse(fs.readFileSync("../../scripts/contract.json"));
+const contractAddress = JSON.parse(fs.readFileSync("../../scripts/contract-address.json"));
 
 const provider = new ethers.providers.InfuraProvider(process.env.NETWORK_NAME, process.env.INFURA_PROJECT_ID, process.env.INFURA_PROJECT_SECRET);
 const test1 = new ethers.Wallet(process.env.KOVAN_PRIVATE_KEY, provider);

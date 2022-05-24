@@ -1,2 +1,1 @@
-export const rewardContractAddress =
-  "0x7Aa5062CccD6d3240C42024daF554669A84550b9";
+export const rewardContractAddress = "0xcb01D89A0bd972490729b78716c8F3297a33f789";

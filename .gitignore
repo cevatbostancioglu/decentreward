@@ -1,10 +1,8 @@
 artifacts
-chainlink
 node_modules
 .env
 cache
 
 backend/chat/.env.twitter
-scripts/*.json
 package-lock.json
 backend/chat/proofs

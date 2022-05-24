@@ -3,8 +3,8 @@ async function main() {
     const fs = require('fs');
     console.log("Deploying contracts with the account:", deployer.address);
 
-    const oracleContractArtifact = JSON.parse(fs.readFileSync("/home/cevat/.chainlink-kovan/decentreward/scripts/oracle-contract.json"));
-    const oracleContractAddress = JSON.parse(fs.readFileSync("/home/cevat/.chainlink-kovan/decentreward/scripts/oracle-contract-address.json"));
+    const oracleContractArtifact = JSON.parse(fs.readFileSync("./scripts/oracle-contract.json"));
+    const oracleContractAddress = JSON.parse(fs.readFileSync("./scripts/oracle-contract-address.json"));
     
     const DRewards = await ethers.getContractFactory("DRewards");
     

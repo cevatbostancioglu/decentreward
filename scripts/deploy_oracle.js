@@ -9,21 +9,11 @@ async function main() {
 
   console.log("deploying apiconsumer contract.");
 
-  const ApiConsumer = await ethers.getContractFactory("ApiConsumer");
-
-  const consumer_contract = await ApiConsumer.deploy(
-      process.env.RINKEBY_LINK_TOKEN_CONTRACT_ADDRESS, oracle_contract.address);
-  
-  console.log("await oracle/apiconsumer contract deployment.");
-
   await oracle_contract.deployed()
-  await consumer_contract.deployed()
    
   console.log("oracle_contract address:", oracle_contract.address);
-  console.log("consumer_contract address:", consumer_contract.address);
 
   saveFrontendFiles(oracle_contract, "Operator", "oracle-contract-address.json", "oracle-contract.json");
-  saveFrontendFiles(consumer_contract, "ApiConsumer", "consumer-contract-address.json", "consumer-contract.json");
   
   console.log("checking node auth status on oracle contract");
 
@@ -37,9 +27,6 @@ async function main() {
   }
 
   console.log("done.");
-
-  //todo: send link to consumer contract.
-
 }
 
 function saveFrontendFiles(contract, name, contract_address_filename, contractabi_filename) {
