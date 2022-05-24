@@ -96,12 +96,12 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	// winnerTwitterID 
 	mapping(string => uint256) winnerEthAmount;
 
-   	// userAdress => eth amount
+   	// userAddress => eth amount
    	mapping(address => uint256) userEthDeposits; 
 
    	// userAddress <=> twitterID
    	mapping(address => string) addressTwitterID;
-   	mapping(string => address) twitterIDAdress;
+   	mapping(string => address) twitterIDAddress;
 
 	// constructor
    	constructor(address _link, address _oracle, uint64 subscriptionId) 
@@ -121,22 +121,18 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	event updateContestState(string indexed tweetID, EContestState indexed state);
 
 	// create new contest
-  	function u_createNewContest(uint256 rewardAmount, string memory tweetID) 
+  	function u_createNewContest(string memory tweetID) 
 		public 
 		onlyEmptyContest(tweetID)
 	{
-		require(rewardAmount > 0);
-	  	/*require(userDeposits[msg.sender][linkTokenAddress] <= rewardAmount, 
-				"Your reward amount must be greater then you already deposit.");
-	  	*/
-	  	require(userEthDeposits[msg.sender] <= rewardAmount, 
-				"Your reward amount must be greater then you already deposit.");
+		require(userEthDeposits[msg.sender] > 0, 
+			"Your must deposit eth.");
 	  	
 		require(bytes(tweetID).length > 0);
 
 	  	contest[tweetID].contestOwner = msg.sender;
-	  	userEthDeposits[msg.sender] = userEthDeposits[msg.sender].sub(rewardAmount);
-	  	contest[tweetID].rewardAmount = contest[tweetID].rewardAmount.add(rewardAmount);
+		contest[tweetID].rewardAmount = contest[tweetID].rewardAmount.add(userEthDeposits[msg.sender]);
+	  	userEthDeposits[msg.sender] = 0;
 	  	contest[tweetID].contestState = EContestState.CONTEST_CREATED;
 	  	//userDeposits[msg.sender][linkTokenAddress] = userDeposits[msg.sender][linkTokenAddress].sub(rewardAmount);
 		
@@ -344,7 +340,7 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
    	{
 		require(bytes(twitterID).length > 0);
 		addressTwitterID[userAddress] = twitterID;
-		twitterIDAdress[twitterID] = userAddress;
+		twitterIDAddress[twitterID] = userAddress;
    	}
 
 	function setFakeVRF(bool _new)
@@ -356,7 +352,15 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 
 	// get functions
 
-	function getEtherBalanceWithAdress(address user) 
+	function getContestOwner(string memory twitterID)
+		public
+		view
+		returns(address)
+	{
+		return contest[twitterID].contestOwner;
+	}
+
+	function getEtherBalanceWithAddress(address user) 
 		public 
 		view 
 		returns(uint256)
@@ -392,17 +396,14 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
    	function getRandomSeed(string memory tweetID) 
 		public 
 		view 
-		onlyValidContest(tweetID) 
 		returns(uint256)
    	{
-		require(contest[tweetID].contestState >= EContestState.CONTEST_RANDOM_DELIVERED);
 		return contest[tweetID].randomSeed;
    	}
 
    	function getContestState(string memory tweetID)
 		public
 		view
-		onlyValidContest(tweetID)
 		returns(EContestState)
    	{
 		return contest[tweetID].contestState;
@@ -421,37 +422,30 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		view 
 		returns(address)
    	{
-		return twitterIDAdress[twitterID];
+		return twitterIDAddress[twitterID];
    	}
 
    	function getProofLocation(string memory tweetID) 
 		public 
 	  	view 
-	  	onlyValidContest(tweetID)
 	  	returns(string memory)
    	{
-		require(contest[tweetID].contestState >= EContestState.CONTEST_PROOF_DELIVERED);
 		return contest[tweetID].ipfsLocation;
    	}
    
    	function getWinnerTwitterID(string memory tweetID)
 		public
 		view
-		onlyValidContest(tweetID)
 		returns(string memory)
 	{
-	  	require(contest[tweetID].contestState >= EContestState.CONTEST_PROOF_DELIVERED); 
 	  	return contest[tweetID].winnerTwitterID;
 	}
 
 	function getContestRewardAmount(string memory tweetID)
 		public
 		view
-		onlyValidContest(tweetID)
 		returns(uint256)
 	{
-		require(contest[tweetID].contestState >= EContestState.CONTEST_CREATED);
-		require(contest[tweetID].contestState <= EContestState.CONTEST_WINNER_LOTTERY_DONE);
 		return contest[tweetID].rewardAmount;
 	}
 
