@@ -16,4 +16,4 @@ curl -X POST -H "content-type:application/json" "http://localhost:5000/getWinner
 
 echo "\n"; sleep 5
 
-curl -X POST -H "content-type:application/json" "http://localhost:5000/getEtherBalanceWithAdress" --data '{ "address": "0x06b911ACca1000823054D9f17424198b076faF86"}'
+curl -X POST -H "content-type:application/json" "http://localhost:5000/getEtherBalanceWithAddress" --data '{ "address": "0x06b911ACca1000823054D9f17424198b076faF86"}'

@@ -22,7 +22,6 @@ export default function DepositTab() {
   const { account } = useEthers();
   const etherBalance = useEtherBalance(account);
 
-  //const onChainBalance = UseGetEtherBalanceWithAdress(account ? account.toString(): "0");
   const { state, send: sendDepositEther } = useContractMethod("depositEther");
 
   const [depositRequestAmount, setDepositRequestAmount] = useControllableState({defaultValue: 0})
@@ -33,9 +32,9 @@ export default function DepositTab() {
     sendDepositEther({value: utils.parseEther(depositRequestAmount.toString())});
   }
 
-  function GetEtherBalanceWithAdress()
+  function GetEtherBalanceWithAddress()
   {
-    ContractInstanceAxios.getEtherBalanceWithAdress(account ? account.toString() : '0')
+    ContractInstanceAxios.getEtherBalanceWithAddress(account ? account.toString() : '0')
         .then(response => {
           setOnChainDeposit(response.data ? response.data : "<cannot update>");
         })
@@ -50,7 +49,7 @@ export default function DepositTab() {
       <Text>Deposit Amount</Text>
       <NumberInput placeholder="Enter amount" w="60%" min={0} alignItems="center"
           precision={4} step={0.01} allowMouseWheel={true} inputMode="numeric"
-          onFocus={GetEtherBalanceWithAdress}
+          onFocus={GetEtherBalanceWithAddress}
           value={depositRequestAmount} onChange={e=>setDepositRequestAmount(Number(e))} >
               <NumberInputField />
               <NumberInputStepper>

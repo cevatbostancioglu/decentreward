@@ -58,8 +58,8 @@ export const ContractInstanceAxios = {
     getRandomSeed: (tweetID : string): Promise<PostTypeNumber> =>
         requests.post("getRandomSeed", qs.stringify({"tweetID": tweetID})),
     /* address : string => string */
-    getEtherBalanceWithAdress: (address : string): Promise<PostTypeString> =>
-        requests.post("getEtherBalanceWithAdress", qs.stringify({"address": address})),
+    getEtherBalanceWithAddress: (address : string): Promise<PostTypeString> =>
+        requests.post("getEtherBalanceWithAddress", qs.stringify({"address": address})),
 };
 
 /*

@@ -26,6 +26,13 @@ const main = async() => {
       test1
   );
 
+const getEtherBalanceWithAddress = async(ethAddress) => {
+  console.log("getEtherBalanceWithAddress(" + ethAddress + ");");
+  let check_balance = await _contract_owner.getEtherBalanceWithAddress(ethAddress.toString());
+  return check_balance;
+}
+
+const main = async() => {
     let tx = await _contract_owner.owner();
     console.log("onchain contract owner(): ", tx);
     

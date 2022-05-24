@@ -20,14 +20,14 @@ export function UseGetContestState(tweetID : string) {
   return contestState;
 }
 
-export function UseGetEtherBalanceWithAdress(address : string) {
+export function getEtherBalanceWithAddress(address : string) {
   const balance: any = 
     useCall(rewardContractAddress && {
       contract: contract,
-      method: "getEtherBalanceWithAdress",
+      method: "getEtherBalanceWithAddress",
       args: [address],
     }) ?? 0;
-    console.log("UseGetEtherBalanceWithAdress", balance);
+    console.log("getEtherBalanceWithAddress", balance);
     return balance;
 }
 */

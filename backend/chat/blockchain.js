@@ -135,15 +135,15 @@ router.post("/getProofLocation", function(req, res) {
   })
 });
 
-router.post("/getEtherBalanceWithAdress", function(req, res) {
-  console.log("getEtherBalanceWithAdress:", req.body.address);
-  _contract_owner.getEtherBalanceWithAdress(req.body.address)
+router.post("/getEtherBalanceWithAddress", function(req, res) {
+  console.log("getEtherBalanceWithAddress:", req.body.address);
+  _contract_owner.getEtherBalanceWithAddress(req.body.address)
   .then(state => {
     res.setHeader("Access-Control-Allow-Origin", "*")
     res.status(200).json(successString(state._hex))
   })
   .catch(error => {
-    console.log("error: getEtherBalanceWithAdress");
+    console.log("error: getEtherBalanceWithAddress");
     console.log(error);
     res.status(500).json(errorw(error))
   })
@@ -166,10 +166,10 @@ blockchain_contract_app.listen(port, () => console.log(`On-Chain contract listen
 
 /* end of in app server */
 
-const getEtherBalanceWithAdress = async(ethAddress) => {
-  console.log("getEtherBalanceWithAdress(" + ethAddress + ");");
+const getEtherBalanceWithAddress = async(ethAddress) => {
+  console.log("getEtherBalanceWithAddress(" + ethAddress + ");");
   return 0.01;
-  //let check_balance = await _contract_owner.getEtherBalanceWithAdress(ethAddress.toString());
+  //let check_balance = await _contract_owner.getEtherBalanceWithAddress(ethAddress.toString());
   //console.log("balance=", check_balance);
   //return check_balance;
 }
@@ -258,7 +258,7 @@ function signMessage(message) {
 };
 
 function pairAddressTwitterID(ethAddress, twitterID, screenName) {
-  balance = getEtherBalanceWithAdress("0x" + ethAddress);
+  balance = getEtherBalanceWithAddress("0x" + ethAddress);
   if (true) {
     console.log("balance:" + balance)
 

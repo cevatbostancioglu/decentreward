@@ -33,7 +33,7 @@ export default function CreateTab() {
 
   function ContractDepositEther()
   {
-    GetEtherBalanceWithAdress()
+    GetEtherBalanceWithAddress()
     //sendDepositEther({value: utils.parseEther(depositRequestAmount.toString())});
   }
 
@@ -59,9 +59,9 @@ export default function CreateTab() {
       
   }
 
-  function GetEtherBalanceWithAdress()
+  function GetEtherBalanceWithAddress()
   {
-    ContractInstanceAxios.getEtherBalanceWithAdress(account ? account.toString() : '0')
+    ContractInstanceAxios.getEtherBalanceWithAddress(account ? account.toString() : '0')
         .then(response => {
           setOnChainDeposit(response.data ? response.data : "<cannot update>");
         })
@@ -76,7 +76,7 @@ export default function CreateTab() {
       <Text>Create Tweet URL</Text>
         
         <Input placeholder="Tweet URL for lottery" w="100%"  
-        alignItems="center" onFocus={GetEtherBalanceWithAdress} 
+        alignItems="center" onFocus={GetEtherBalanceWithAddress} 
         value={createtwURL} onChange={(e) => {setCreatetwURL(e.target.value)}} />
 
         <Text >ethBalance: {etherBalance && parseFloat(utils.formatEther(etherBalance)).toFixed(3)} ETH</Text>
