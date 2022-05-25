@@ -16,6 +16,13 @@ const { verifyMessage,
     pairAddressTwitterID,
     updateCheckRewardTwit,
     signContestStart,
+    rewardContractGetState, rewardDepositBalanceWithTwitterID,
+    rewardContractAddress, rewardContractRegister,
+    rewardContractBotCreateContest,
+    rewardContractGetContestRewardAmount,
+    rewardContractGetEthAddress, rewardContractwithdrawWinnerReward,
+    rewardContractGetProofLocation, rewardContractGetWinnerTwitterID,
+    rewardContractRequestProofFromNode, rewardContractGetContestOwnerTwitterID,
     isEthAddressVerified } = require('./blockchain');
 
 require('dotenv').config({path: './.env.twitter'});
@@ -39,26 +46,22 @@ var T = new Twit({
 
 const helpText = "\n                           \
 - help - Help menu                             \
-- flow - Reward                                \
-- reward Reward status, use it with tweet id   \
-         reward 12345                          \
-        --- started will be done x.y.z         \
-        --- winner:                            \
-        --- candicates:                        \
-        good luck next time!                   \
-- verify signature verification                \
-- status my status on rewards                  \
-- start tweetid                                \
-- stop tweedid                                 \
+- deposit                                      \
+- register <ethereum address>                  \
+- balance                                      \
+- create  <tweetID>                            \
+- status <tweetID>                             \
+- finish <tweetID>                             \
+- withdraw <tweetID>                           \
 - cancel tweedid                               \
 ";
 
-async function markAsRead(messageId, senderId, auth) {
+async function markAsRead(messageId, senderID, auth) {
     const requestConfig = {
       url: 'https://api.twitter.com/1.1/direct_messages/mark_read.json',
       form: {
         last_read_event_id: messageId,
-        recipient_id: senderId,
+        recipient_id: senderID,
       },
       oauth: auth,
     };
@@ -66,11 +69,11 @@ async function markAsRead(messageId, senderId, auth) {
     await post(requestConfig);
 }
 
-async function indicateTyping(senderId, auth) {
+async function indicateTyping(senderID, auth) {
     const requestConfig = {
       url: 'https://api.twitter.com/1.1/direct_messages/indicate_typing.json',
       form: {
-        recipient_id: senderId,
+        recipient_id: senderID,
       },
       oauth: auth,
     };
@@ -88,6 +91,22 @@ const replyTweet = async (userScreenName, tweetID, textMessage) => {
   //replyTweet("GodModeInvestor", "1523825807243812865", "hello");
 };
 
+const userLookUpFromID = async(twitterID) => {
+  //https://github.com/PLhery/node-twitter-api-v2/blob/53b0daf4b34fe158e12bd20038981938cc092085/doc/v2.md#UsersbyID
+  const username = await twitterClient.v2.users([twitterID]);
+  /*
+  {
+    data: [
+      {
+        id: '308399201',
+        name: 'God Mode Investor',
+        username: 'GodModeInvestor'
+      }
+    ]
+  }*/
+  return username;
+}
+
 const tweetLikedBy = async function(id) {
   console.log("tweetLikedBy:", id);
   const users = await twitterClient.v2.tweetLikedBy(id, { asPaginator: true });
@@ -97,7 +116,6 @@ const tweetLikedBy = async function(id) {
     allIDs.push(user);
   }
   //uniq = allIDs;//[...new Set(allIDs)]; // remove duplicates
-  //console.log(allIDs);
   
   console.log("tweetLikedBy done, length:", allIDs.length);
 
@@ -106,8 +124,17 @@ const tweetLikedBy = async function(id) {
   //tweetLikedBy("1525266410012016641");
 }
 
+tweetLikedBy("1529578847640899589");
 
 const replyDMMessage = async (message, textMessage) => {
+    // We filter out message you send, to avoid an infinite loop
+    if (
+      message.message_create.sender_id ===
+      message.message_create.target.recipient_id
+    ) {
+      return;
+    }
+
     const requestConfig = {
         url: "https://api.twitter.com/1.1/direct_messages/events/new.json",
         oauth: oAuthConfig,
@@ -130,6 +157,27 @@ const replyDMMessage = async (message, textMessage) => {
       console.log("replyDMMessage done");
 }
 
+const replyDMEvent = async (_event, textMessage) => {
+  let requestConfig = {
+    url: "https://api.twitter.com/1.1/direct_messages/events/new.json",
+    oauth: oAuthConfig,
+    json: {
+      event: {
+        type: "message_create",
+        message_create: {
+          target: {
+            recipient_id: _event.follow_events[0].source.id,
+          },
+          message_data: {
+            text: textMessage,
+          },
+        },
+      },
+    },
+  };
+  let response = await post(requestConfig);
+}
+
 const classifyAndAnswerDM = async (event) => {
   // This is broken
   // We check that the message is a direct message
@@ -148,14 +196,6 @@ const classifyAndAnswerDM = async (event) => {
     return;
   }
 
-  // We filter out message you send, to avoid an infinite loop
-  if (
-    message.message_create.sender_id ===
-    message.message_create.target.recipient_id
-  ) {
-    return;
-  }
-
   // Prepare and send the message reply
   const senderScreenName = event.users[message.message_create.sender_id].name;
   const senderID = message.message_create.sender_id;
@@ -163,51 +203,248 @@ const classifyAndAnswerDM = async (event) => {
 
   saveDatabase(message.message_create.sender_id, message.message_create.message_data.text);
 
-  let textMessage = `Hi @${senderScreenName}! 👋🏻`;
+  let textMessage = "Hi @" + userName + "! 👋🏻";
   console.log(message.message_create.message_data.text);
   message_itself = message.message_create.message_data.text;
   message_toLowerCase = message.message_create.message_data.text.toLowerCase();
 
+  let messagecommands = message_toLowerCase.split(" ");
+
   if (message_toLowerCase.includes("hello, how are you?")) {
     textMessage = helpText;
   }
-  else if (message_toLowerCase.includes("verify"))
+  
+  if(message_toLowerCase == "balance")
   {
-    textMessage = "Please sign latest eth blocknumber with your address key." +
-     "latest block: https://etherscan.io/blocks, sign using myEtherWallet(https://www.myetherwallet.com/wallet/sign)," +
-     " and copy the result here."
+    console.log("balance->" + message.message_create.sender_id);
+     
+    let balance = await rewardDepositBalanceWithTwitterID(message.message_create.sender_id)
+    textMessage = "Your usable balance on blockchain is " + balance.toString() + " Ether";
   }
-  else if (message_toLowerCase.includes("signer") && message_toLowerCase.includes("mew"))
+  else if (message_toLowerCase == "deposit")
   {
-      textJson = JSON.parse(message_toLowerCase);
-      if (verifyMessage(textJson).verified == true) {
-        balance = pairAddressTwitterID(verifyMessage(textJson).signer, senderID, userName);
-        textMessage = "Verified, signer(0x" + verifyMessage(textJson).signer + ") belongs to " + senderScreenName + "(" + 
-        senderID + "), balance on contract:" + balance + " wei";
-        console.log(textMessage);
+    textMessage = "Please deposit using our website or etherscan \n" +
+    "http://localhost:3000/ \n" + 
+    "https://rinkeby.etherscan.io/address/" + rewardContractAddress + "#writeContract \n";
+  }
+  else if (messagecommands.length > 1)
+  {
+    console.log(messagecommands[0] +"->" + message.message_create.sender_id + " -> " + messagecommands[1]);
+    if(messagecommands[0] == "register")
+    {
+      textMessage = "Message queried to blockchain, you will get tx info soon";
+      let txHash = await rewardContractRegister(messagecommands[1], message.message_create.sender_id)
+      let m = "https://rinkeby.etherscan.io/tx/" + txHash
+      replyDMMessage(message, m);
+    }
+    else if(messagecommands[0] == "create")
+    {
+      if (messagecommands[1].toString().includes("https://t.co/"))
+      {
+        textMessage = "Twitter automatically use shorter urls for DM, please just send Tweet ID. \n";
       }
       else
       {
-        textMessage = "Failed to verify on bot, please only copy given text";
-      }
-  }
-  else if (message_toLowerCase.includes("start:"))
-  {
-    console.log(message_toLowerCase);
-    let tweetID = message_itself.substr(6);
+        let balance = await rewardDepositBalanceWithTwitterID(message.message_create.sender_id);
 
-    if (isEthAddressVerified(senderID))
-    {
-      updateCheckRewardTwit(tweetID, senderID);
-      textMessage = signContestStart(tweetID);
-      replyTweet(userName, tweetID, textMessage);
+        // balance check not working for now. @todo
+        if (balance > 0.01)
+        {
+          textMessage = "Your balance is not enough for contest, please deposit using \n" +
+          "http://localhost:3000/ \n" + 
+          "https://rinkeby.etherscan.io/address/" + rewardContractAddress + "#writeContract \n";
+        }
+        else
+        {
+          textMessage = "Message queried to blockchain, you will get tx info soon";
+          let txHash = await rewardContractBotCreateContest(message.message_create.sender_id, 
+              messagecommands[1]);
+          let m = "https://rinkeby.etherscan.io/tx/" + txHash
+          replyDMMessage(message, m);
+        }
+      }
     }
-    else
+    else if(messagecommands[0] == "status")
     {
-      textMessage = "Eth Verification failed, please type verify for more instructions.";
+      if (messagecommands[1].toString().includes("https://t.co/"))
+      {
+        textMessage = "Twitter automatically use shorter urls for DM, please just send Tweet ID. \n";
+      }
+      else
+      {
+        textMessage = "Contest Status: \n";
+        let localstatus = await rewardContractGetState(messagecommands[1]);
+        let rewardAmount = 0;
+        let ipfshash = "";
+        let winnerTwitterID = "";
+        let winnerUserName = "";
+
+        if (localstatus != 0)
+        {
+          rewardAmount = await rewardContractGetContestRewardAmount(messagecommands[1])
+        }
+
+        if (localstatus >= 4)
+        {
+          ipfshash = await rewardContractGetProofLocation(messagecommands[1])
+        }
+
+        if (localstatus >= 4)
+        {
+          winnerTwitterID = await rewardContractGetWinnerTwitterID(messagecommands[1])
+          let winnerJSON = await userLookUpFromID(winnerTwitterID);
+          console.log(winnerJSON)
+          winnerUserName = winnerJSON.data[0].username
+          /*
+          {
+            data: [
+              {
+                id: '308399201',
+                name: 'God Mode Investor',
+                username: 'GodModeInvestor'
+              }
+            ]
+          }
+          */
+        }
+
+        textMessage += (localstatus == 0 ? "Contest not created for this tweet.\n" : "");
+        textMessage += (localstatus == 1 ? "Contest created with " + rewardAmount + " ether\n" : localstatus >= 1 ? "Contest reward " + rewardAmount + " ether\n" : "");
+        textMessage += (localstatus == 2 ? "Proof and Random Requested\n" : "")
+        textMessage += (localstatus >= 3 ? "Random Delivered\n" : "")
+        textMessage += (localstatus >= 4 ? "IPFS Proof Delivered\n" : "");
+        textMessage += (localstatus >= 4 ? "Proof link: https://" + ipfshash + ".ipfs.dweb.link \n" : "");
+        textMessage += (localstatus >= 4 ? "Winner selected, Winner:@" + winnerUserName + ", winner can withdraw reward\n" : "");
+        textMessage += (localstatus >= 5 ? "Contest finished, Winner:@" + winnerUserName + ", rewards distrobuted \n" : "");
+      }
+    }
+    else if(messagecommands[0] == "finish")
+    {
+      if (messagecommands[1].toString().includes("https://t.co/"))
+      {
+        textMessage = "Twitter automatically use shorter urls for DM, please just send Tweet ID. \n";
+      }
+      else
+      { 
+        // auth.
+        let contestOwnerTwitterID = await rewardContractGetContestOwnerTwitterID(messagecommands[1]);
+        
+        console.log("auth:contestOwnerTwitterID -> ", contestOwnerTwitterID);
+
+        if (contestOwnerTwitterID.toString() != message.message_create.sender_id.toString())
+        {
+          console.log("Auth failed.");
+          textMessage = "Only creator of contest can finish contests.\n";
+        }
+        else
+        {
+          console.log("auth done. sending tx");
+          textMessage = "Message queried to blockchain, you will get tx info soon";
+          let txHash = await rewardContractRequestProofFromNode(messagecommands[1]);
+          let m = "https://rinkeby.etherscan.io/tx/" + txHash
+          replyDMMessage(message, m);
+        }
+      }
+    }
+    else if(messagecommands[0] == "withdraw")
+    {
+      // withdraw 123123
+      if (messagecommands[1].toString().includes("https://t.co/"))
+      {
+        textMessage = "Twitter automatically use shorter urls for DM, please just send Tweet ID. \n";
+      }
+      else
+      {
+        let localstatus = await rewardContractGetState(messagecommands[1]);
+        
+        // 4-> proof delivered, 5 -> reward distro done.
+        if (localstatus <4)
+        {
+          textMessage = (localstatus == 0 ? "Contest not available on-chain\n" : "Contest is not ready to withdraw yet.\n");
+        }
+        else if(localstatus == 6)
+        {
+          textMessage = "Contest already paid to winner\n";
+        }
+        else
+        {
+          // auth.
+          let winnerTwitterID = await rewardContractGetWinnerTwitterID(messagecommands[1])
+          
+          console.log("auth:winnerTwitterID -> ", winnerTwitterID);
+
+          if (winnerTwitterID.toString() != message.message_create.sender_id.toString())
+          {
+            console.log("Auth failed.");
+            textMessage = "Only winner can withdraw rewards.\n";
+          }
+          else
+          {
+            console.log("auth done.");
+            
+            let winnerEthAddress = await rewardContractGetEthAddress(message.message_create.sender_id);
+            
+            if (winnerEthAddress == "0x0000000000000000000000000000000000000000")
+            {
+              textMessage = "Your Ethereum address is empty, please use register function like: \n" +
+              "register <yourEthAddress> \n";
+            }
+            else
+            {
+              textMessage = "Message queried to blockchain, you will get tx info soon";
+              let txHash = await rewardContractwithdrawWinnerReward(message.message_create.sender_id, 
+                  messagecommands[1]);
+              let m = "https://rinkeby.etherscan.io/tx/" + txHash
+              replyDMMessage(message, m);
+            }
+          }
+        }
+      }
+    }
+    /*
+    else if (messagecommands[0] == "verify")
+    {
+      textMessage = "Please sign latest eth blocknumber with your address key." +
+      "latest block: https://etherscan.io/blocks, sign using myEtherWallet(https://www.myetherwallet.com/wallet/sign)," +
+      " and copy the result here."
+    }
+    else if (message_toLowerCase.includes("signer") && message_toLowerCase.includes("mew"))
+    {
+        textJson = JSON.parse(message_toLowerCase);
+        if (verifyMessage(textJson).verified == true) {
+          balance = pairAddressTwitterID(verifyMessage(textJson).signer, senderID, userName);
+          textMessage = "Verified, signer(0x" + verifyMessage(textJson).signer + ") belongs to " + senderScreenName + "(" + 
+          senderID + "), balance on contract:" + balance + " wei";
+          console.log(textMessage);
+        }
+        else
+        {
+          textMessage = "Failed to verify on bot, please only copy given text";
+        }
+    }
+    else if (message_toLowerCase.includes("start:"))
+    {
+      console.log(message_toLowerCase);
+      let tweetID = message_itself.substr(6);
+
+      if (isEthAddressVerified(senderID))
+      {
+        updateCheckRewardTwit(tweetID, senderID);
+        textMessage = signContestStart(tweetID);
+        replyTweet(userName, tweetID, textMessage);
+      }
+      else
+      {
+        textMessage = "Eth Verification failed, please type verify for more instructions.";
+      }
+    }
+    */
+    else {
+      textMessage = helpText
     }
   }
-  else {
+  else
+  {
     textMessage = helpText
   }
 
@@ -215,59 +452,20 @@ const classifyAndAnswerDM = async (event) => {
 };
 
 const respondFollower = async (event) => {
-  // This is broken
-  // We check that the message is a direct message
-
-  //console.log("Bruh Moment", event.follow_events[0].source.id);
-  // Messages are wrapped in an array, so we'll extract the first element
   const message = event.follow_events.type;
 
   // Prepare and send the message reply
   const senderScreenName = event.follow_events[0].source.name;
   const userName = event.follow_events[0].source.screen_name;
 
-  console.log(event.follow_events[0].source);
-  let textMessage = `Hi @${senderScreenName}! 👋 \n We have specially curated #HowAreYouTweening2020 for you! Thank you for being with us for the year, and we're excited to have many more years ahead! \n Check out what you've been up to: \n https://how-are-you-tweeting.netlify.app/?username=${userName}`;
-  let requestConfig = {
-    url: "https://api.twitter.com/1.1/direct_messages/events/new.json",
-    oauth: oAuthConfig,
-    json: {
-      event: {
-        type: "message_create",
-        message_create: {
-          target: {
-            recipient_id: event.follow_events[0].source.id,
-          },
-          message_data: {
-            text: textMessage,
-          },
-        },
-      },
-    },
-  };
+  //console.log(event.follow_events[0].source);
+  let textMessage = "Hi @" + userName +"! 👋 \n, You can use this DM for managing your contests.";
+  
+  await replyDMEvent(event, textMessage)
 
-  let response = await post(requestConfig);
-  textMessage =
-    "We know that this has been a tough year! :( We are here to support! \n Reply one of the following to ... \n 1. Get Motivated \n 2. Meet meaningful people \n";
+  textMessage = helpText;
 
-  requestConfig = {
-    url: "https://api.twitter.com/1.1/direct_messages/events/new.json",
-    oauth: oAuthConfig,
-    json: {
-      event: {
-        type: "message_create",
-        message_create: {
-          target: {
-            recipient_id: event.follow_events[0].source.id,
-          },
-          message_data: {
-            text: textMessage,
-          },
-        },
-      },
-    },
-  };
-  response = await post(requestConfig);
+  await replyDMEvent(event, textMessage)
 };
 
 module.exports = {

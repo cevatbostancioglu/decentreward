@@ -5,6 +5,13 @@ const path = require('path');
 
 const { Web3Storage, getFilesFromPath } = require('web3.storage');
 
+const isEmpty = (value) => (
+  value === undefined ||
+  value === null ||
+  (typeof value === 'object' && Object.keys(value).length === 0) ||
+  (typeof value === 'string' && value.trim().length === 0)
+)
+
 const ipfsUpload = async function(input, tweetliked) {
   const token = process.env.WEB3STORAGE_API_TOKEN;
 
@@ -42,8 +49,17 @@ const ipfsUpload = async function(input, tweetliked) {
   console.log(`Uploading ${files.length} proof files`);
   const cid = await storage.put(files);
   console.log('Content added with CID:', cid);
-
-  return [input.data.tweetID, winner.id, cid]; 
+  
+  // case
+  // https://bafybeigraa5z2asq4rgyimi7bpbleuk55cljft35n2wfx52ixcppaugue4.ipfs.dweb.link/proof_1529578847640899589.json
+  if(tweetliked.length == 0)
+  {
+    return [input.data.tweetID, "0", cid];
+  }
+  else
+  {
+    return [input.data.tweetID, winner.id, cid]; 
+  }
 }
 
 module.exports = {
