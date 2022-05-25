@@ -2,19 +2,26 @@ const { ethers } = require('hardhat');
 
 async function supplyEth(deployer, amount, target)
 {
-  console.log("Node balance is running low, sending eth to node.");
-  // Create a transaction object
-  let tx = {
-    to: target,
-    // Convert currency unit from ether to wei
-    value: ethers.utils.parseEther(amount.toString())
+  if (amount > 0.01)
+  {
+    console.log("Node balance is running low, sending eth to node.");
+    // Create a transaction object
+    let tx = {
+      to: target,
+      // Convert currency unit from ether to wei
+      value: ethers.utils.parseEther(amount.toString())
+    }
+    
+    console.log("deployer send");
+    await deployer.sendTransaction(tx)
+    .then((txObj) => {
+      console.log("Node fund done, txHash:", txObj.hash);
+    })
   }
-  
-  console.log("deployer send");
-  await deployer.sendTransaction(tx)
-  .then((txObj) => {
-    console.log("Node fund done, txHash:", txObj.hash);
-  })
+  else
+  {
+    console.log("node balance is < 0.25 but gas fee is higher. not funding node eth now.");
+  }
 }
 
 async function supplyLink(contract, amount, target)

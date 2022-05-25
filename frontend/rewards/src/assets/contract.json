@@ -197,11 +197,6 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
-        "name": "rewardAmount",
-        "type": "uint256"
-      },
-      {
         "internalType": "string",
         "name": "tweetID",
         "type": "string"
@@ -210,6 +205,30 @@
     "name": "bot_createNewContest",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "a",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "b",
+        "type": "string"
+      }
+    ],
+    "name": "compareStrings",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {
@@ -577,6 +596,24 @@
       }
     ],
     "name": "requestRandomSeed",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "tweetID",
+        "type": "string"
+      },
+      {
+        "internalType": "enum DRewards.EContestState",
+        "name": "state",
+        "type": "uint8"
+      }
+    ],
+    "name": "setContestState",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
