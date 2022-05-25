@@ -139,20 +139,19 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	  	emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
 
-   	function bot_createNewContest(address contestOwner, uint256 rewardAmount, string memory tweetID) 
+   	function bot_createNewContest(address contestOwner, string memory tweetID) 
 		public 
 		onlyOwner
 		onlyEmptyContest(tweetID)
 	{
-		require(rewardAmount > 0);
-	  	require(userEthDeposits[contestOwner] <= rewardAmount, 
+	  	require(userEthDeposits[contestOwner] > 0, 
 			"Your reward amount must be greater then you already deposit.");
 
 	  	require(bytes(tweetID).length > 0);
 	  
 	  	contest[tweetID].contestOwner = contestOwner;
-		userEthDeposits[msg.sender] = userEthDeposits[msg.sender].sub(rewardAmount);
-	  	contest[tweetID].rewardAmount = contest[tweetID].rewardAmount.add(rewardAmount);
+	  	contest[tweetID].rewardAmount = contest[tweetID].rewardAmount.add(userEthDeposits[msg.sender]);
+		userEthDeposits[msg.sender] = 0;
 		contest[tweetID].contestState = EContestState.CONTEST_CREATED;
 	  	//userDeposits[msg.sender][linkTokenAddress] = userDeposits[msg.sender][linkTokenAddress].sub(rewardAmount);
 
@@ -162,16 +161,29 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	// trigger reward distro
    	function triggerRewardDistrobution(string memory tweetID)
 		private
+		onlyOwnerOrContestOwner(tweetID)
 	  	onlyValidContest(tweetID)
 	  	onlyContestState(tweetID, EContestState.CONTEST_PROOF_DELIVERED)
+			returns(bool)
    	{
 		// only user or owner.
 		contest[tweetID].contestState = EContestState.CONTEST_WINNER_LOTTERY_DONE;
 		
 		string memory _contestWinner = contest[tweetID].winnerTwitterID;
-		winnerEthAmount[_contestWinner] = winnerEthAmount[_contestWinner].add(contest[tweetID].rewardAmount);
-
-		emit updateContestState(tweetID, contest[tweetID].contestState);
+		
+		// no one liked the tweet, refund back.
+		if(compareStrings(_contestWinner, "0") == true)
+		{
+			address contestOwner = contest[tweetID].contestOwner;
+			userEthDeposits[contestOwner] = userEthDeposits[contestOwner].add(contest[tweetID].rewardAmount);
+			emit updateContestState(tweetID, contest[tweetID].contestState);
+			return false;
+		}
+		else
+		{
+			winnerEthAmount[_contestWinner] = winnerEthAmount[_contestWinner].add(contest[tweetID].rewardAmount);
+			return true;
+		}
    	}
 
 	// eth reward deposit
@@ -208,21 +220,30 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	// withdraw reward
 	function withdrawWinnerReward(string memory tweetID, address payable contestWinner)
 		public
-		onlyOwner
+		onlyOwnerOrContestOwner(tweetID)
 		onlyValidContest(tweetID)
 	{
 		/*require(IERC20(linkTokenAddress).transfer(contestWinner, contest[tweetID].rewardAmount), 
 			"transfer failed.");
 		*/
 
-		triggerRewardDistrobution(tweetID);
+		bool r = triggerRewardDistrobution(tweetID);
 		
 		require(contest[tweetID].contestState == EContestState.CONTEST_WINNER_LOTTERY_DONE);
 
 		contest[tweetID].contestState = EContestState.CONTEST_END;
-		string memory _winnerTwitterID = contest[tweetID].winnerTwitterID;
-		contestWinner.transfer(winnerEthAmount[_winnerTwitterID]);
-		winnerEthAmount[_winnerTwitterID] = 0;
+		
+		// if reward distributed or refunded to deposit account of owner.
+		if(r)
+		{
+			string memory _winnerTwitterID = contest[tweetID].winnerTwitterID;
+			
+			//TODO: issue here. contest owner can send funds to whoever they want.
+			// if(twitterIDAddress[_winnerTwitterID] == address(0))
+			contestWinner.transfer(winnerEthAmount[_winnerTwitterID]);
+			winnerEthAmount[_winnerTwitterID] = 0;
+		}
+
 		emit updateContestState(tweetID, contest[tweetID].contestState);
 	}
 
@@ -232,7 +253,7 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	*/
 	function requestProofFromNode(string memory tweetID)
 		public
-		onlyOwner
+		onlyOwnerOrContestOwner(tweetID)
 	  	onlyContestStateGE(tweetID, EContestState.CONTEST_CREATED)
    	{
 		// only owner or user itself.
@@ -299,6 +320,10 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
 
+	function compareStrings(string memory a, string memory b) public pure returns (bool) {
+    	return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+	}
+
 	event RequestFulfilled(
 		bytes32 indexed requestId,
 	  	string[] indexed data
@@ -333,6 +358,14 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 
 
 	// set functions
+
+	function setContestState(string memory tweetID, EContestState state)
+		public
+		onlyOwner
+	{
+		require(bytes(tweetID).length > 0);
+		contest[tweetID].contestState = state;
+	}
 
 	function setTwitterID(address userAddress, string memory twitterID)
    		public
@@ -450,6 +483,12 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	}
 
 	// modifiers
+
+	modifier onlyOwnerOrContestOwner(string memory tweetID) {
+		require(contest[tweetID].contestOwner == msg.sender || 
+			owner() == msg.sender, "only contest owner or owner can trigger");
+		_;
+	}
 
    	modifier onlyEmptyContest(string memory newContestID) {
 		require(bytes(newContestID).length > 0);
