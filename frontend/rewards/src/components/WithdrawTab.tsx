@@ -3,10 +3,12 @@ import {
   Flex,
   Text,
   Button,
+  Link,
+  Image,
   useControllableState
 } from "@chakra-ui/react";
 
-import { AddIcon } from '@chakra-ui/icons';
+import { ExternalLinkIcon } from '@chakra-ui/icons';
 
 import { ContractInstanceAxios } from './ContractReadInstanceAxios';
 
@@ -14,9 +16,12 @@ import { UseUCreateNewContest } from "../hooks";
 import { utils } from "ethers";
 import { useEthers, useEtherBalance } from "@usedapp/core";
 
+import decentrewardsbotprofile from "../assets/decentrewardsbotprofile.png"; 
+
+
 const parser = require("twitter-url-parser");
 
-export default function CreateTab() {
+export default function WithdrawTab() {
   
   /* wallet */
   const { account } = useEthers();
@@ -64,16 +69,13 @@ export default function CreateTab() {
 
   return (
     <Flex direction="column" align="center" mt="4">
-      <Text>Create Tweet URL</Text>
-        
-        <Input placeholder="Tweet URL for lottery" w="100%"  
-        alignItems="center" onFocus={GetEtherBalanceWithAddress} 
-        value={createtwURL} onChange={(e) => {setCreatetwURL(e.target.value)}} />
-
-        <Text >ethBalance: {etherBalance && parseFloat(utils.formatEther(etherBalance)).toFixed(3)} ETH</Text>
-        <Text >{account ? (onChainDeposit != "0" ? "ethBalanceOnContract:" + onChainDeposit + " ETH" : ("Click to see Balance")) : 
-              ("Connect Wallet to see Balance")} </Text>
-        <Button mt={4} colorScheme='teal' leftIcon={<AddIcon />} onClick={CreateNewContest}> Create New </Button>
+                <Text>Tweet URL for withdraws</Text>
+                    <Input placeholder="Tweet URL" w="15%" />
+              
+                <Text mt={3} mb={3} > Winner can DM @decentrewardsbot on twitter.</Text>
+                <Link href="https://twitter.com/DecentRewardBot" isExternal > @DecentRewardsBot<ExternalLinkIcon mx="2px" /></Link>
+                <p></p>
+                <Image src={decentrewardsbotprofile} alt="twitter bot profile" mt={5} />
     </Flex>
   );
 }

@@ -45,6 +45,12 @@ export function UseDepositEther() {
     */
 }
 
+export function UseUCreateNewContest() {
+  const { state, send} = useContractFunction(contract, "u_createNewContest", {});
+
+  return {state, send};
+}
+
 export function useContractMethod(methodName: string) {
     const { state, send } = useContractFunction(contract, methodName, {});
     return { state, send };
