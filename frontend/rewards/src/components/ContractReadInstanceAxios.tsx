@@ -42,6 +42,9 @@ const requests = {
 };
 
 export const ContractInstanceAxios = {
+    /* void => string */
+    getBlockNumber: (): Promise<PostTypeString> =>
+        requests.post("getBlockNumber", qs.stringify({})),
     /* tweetID: string => string */
     getProofLocation: (tweetID : string): Promise<PostTypeString> =>
         requests.post("getProofLocation", qs.stringify({"tweetID": tweetID})),

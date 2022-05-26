@@ -10,20 +10,15 @@ const { saveDatabase, returnUserState } = require('./user-state');
 const { ethers } = require('ethers');
 
 const { verifyMessage, 
-    signMessage, 
-    readBalanceWithTwitterID, 
-    readAddressDepositAmount,
-    pairAddressTwitterID,
-    updateCheckRewardTwit,
-    signContestStart,
+    getBlockNumber,
     rewardContractGetState, rewardDepositBalanceWithTwitterID,
     rewardContractAddress, rewardContractRegister,
     rewardContractBotCreateContest,
     rewardContractGetContestRewardAmount,
     rewardContractGetEthAddress, rewardContractwithdrawWinnerReward,
     rewardContractGetProofLocation, rewardContractGetWinnerTwitterID,
-    rewardContractRequestProofFromNode, rewardContractGetContestOwnerTwitterID,
-    isEthAddressVerified } = require('./blockchain');
+    rewardContractRequestProofFromNode, 
+    rewardContractGetContestOwnerTwitterID } = require('./blockchain');
 
 require('dotenv').config({path: './.env.twitter'});
 
@@ -124,7 +119,15 @@ const tweetLikedBy = async function(id) {
   //tweetLikedBy("1525266410012016641");
 }
 
-tweetLikedBy("1529578847640899589");
+function hex_to_ascii(str1)
+ {
+	var hex  = str1.toString();
+	var str = '';
+	for (var n = 0; n < hex.length; n += 2) {
+		str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
+	}
+	return str;
+}
 
 const replyDMMessage = async (message, textMessage) => {
     // We filter out message you send, to avoid an infinite loop
@@ -227,10 +230,43 @@ const classifyAndAnswerDM = async (event) => {
     "http://localhost:3000/ \n" + 
     "https://rinkeby.etherscan.io/address/" + rewardContractAddress + "#writeContract \n";
   }
+  else if (message_toLowerCase.includes("address") && message_toLowerCase.includes("msg")
+    && message_toLowerCase.includes("sig")
+    && message_toLowerCase.includes("signer") && message_toLowerCase.includes("version"))
+    {
+      console.log("verifyMessage");
+        textJson = JSON.parse(message_toLowerCase);
+
+        if (verifyMessage(textJson).verified == true) {
+          let decodedBlockNumber = hex_to_ascii(textJson.msg).split("-")[1];
+          let latestBlockNumber = await getBlockNumber();
+          
+          // on rinkeby network , 100 block is almost 25minutes.
+          if(decodedBlockNumber >= latestBlockNumber - 100)
+          {
+            //balance = pairAddressTwitterID(verifyMessage(textJson).signer, senderID, userName);
+            textMessage = "Verified, signer(" + textJson.address.toString() + ") belongs to @" + userName;
+            replyDMMessage(message, textMessage);
+            textMessage = "Message queried to blockchain, you will get tx info soon";
+            let txHash = await rewardContractRegister(textJson.address.toString(), message.message_create.sender_id)
+            replyDMMessage(message, "https://rinkeby.etherscan.io/tx/" + txHash);
+          }
+          else
+          {
+            textMessage = "cannot verify, timeout(latestBlock=" +
+              latestBlockNumber + ", SignedBlock=" +
+              decodedBlockNumber + "), 100block = 25 minutes.\n";
+          }
+        }
+        else
+        {
+          textMessage = "Failed to verify on bot, please only copy given text";
+        }
+    }
   else if (messagecommands.length > 1)
   {
     console.log(messagecommands[0] +"->" + message.message_create.sender_id + " -> " + messagecommands[1]);
-    if(messagecommands[0] == "register")
+    if(messagecommands[0] == "register12331231231213231555")
     {
       textMessage = "Message queried to blockchain, you will get tx info soon";
       let txHash = await rewardContractRegister(messagecommands[1], message.message_create.sender_id)
@@ -401,27 +437,13 @@ const classifyAndAnswerDM = async (event) => {
         }
       }
     }
-    /*
     else if (messagecommands[0] == "verify")
     {
       textMessage = "Please sign latest eth blocknumber with your address key." +
-      "latest block: https://etherscan.io/blocks, sign using myEtherWallet(https://www.myetherwallet.com/wallet/sign)," +
+      "latest block number: https://etherscan.io/blocks, sign using myEtherWallet(https://www.myetherwallet.com/wallet/sign)," +
       " and copy the result here."
     }
-    else if (message_toLowerCase.includes("signer") && message_toLowerCase.includes("mew"))
-    {
-        textJson = JSON.parse(message_toLowerCase);
-        if (verifyMessage(textJson).verified == true) {
-          balance = pairAddressTwitterID(verifyMessage(textJson).signer, senderID, userName);
-          textMessage = "Verified, signer(0x" + verifyMessage(textJson).signer + ") belongs to " + senderScreenName + "(" + 
-          senderID + "), balance on contract:" + balance + " wei";
-          console.log(textMessage);
-        }
-        else
-        {
-          textMessage = "Failed to verify on bot, please only copy given text";
-        }
-    }
+    /*
     else if (message_toLowerCase.includes("start:"))
     {
       console.log(message_toLowerCase);

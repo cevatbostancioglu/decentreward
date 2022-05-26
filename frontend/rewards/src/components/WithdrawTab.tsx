@@ -41,11 +41,29 @@ export default function WithdrawTab() {
 
   const [ onChainBind, setOnChainBind ] = useControllableState({defaultValue: false})
 
+  function GetBlockNumber()
+  {
+    ContractInstanceAxios.getBlockNumber()
+      .then(response => {
+        if (response.data != "")
+        {
+          setSignatureChallenge("Block-" + response.data);
+        }
+        else
+        {
+          setSignatureChallenge("Block-" + response.data);
+        }})
+      .catch(error => {
+        //axios errors etc.
+        alert(error);
+        setSignatureChallenge("Not available now. backend error.");
+      })
+  }
+
   function CheckTwitterBinding()
   {
     ContractInstanceAxios.getTwitterID(account ? account.toString() : "0")
       .then(response => {
-        alert(response.data);
         if (response.data != "")
         {
           setOnChainBind(true);
@@ -53,6 +71,7 @@ export default function WithdrawTab() {
         else
         {
           setOnChainBind(false);
+          GetBlockNumber();
         }})
       .catch(error => {
         //axios errors etc.

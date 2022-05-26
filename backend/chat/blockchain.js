@@ -9,7 +9,7 @@ const fs = require('fs');
 const { verify } = require('crypto');
 
 require('dotenv').config({path: '../../.env'});
-require('dotenv').config({path: './.env.twitter'})
+require('dotenv').config({path: './.env.twitter'}) // same values except "export"
 
 const contractArtifact = JSON.parse(fs.readFileSync("../../scripts/contract.json"));
 const contractAddress = JSON.parse(fs.readFileSync("../../scripts/contract-address.json"));
@@ -80,8 +80,7 @@ const blockchain_contract_app = express();
 
 blockchain_contract_app.use(bodyParser.urlencoded({extended: false}));
 blockchain_contract_app.use(bodyParser.json())
-let port = 5000;
-
+let port = process.env.BACKEND_FRONTEND_PORT || 5000;
 
 router.post("/getContestState", function(req, res) {
   _contract_owner.getContestState(req.body.tweetID)
@@ -175,6 +174,22 @@ router.post("/getTwitterID", function(req, res) {
 });
 
 // twitterID -> ethAddress
+router.post("/getBlockNumber", function(req, res) {
+  console.log("getBlockNumber");
+  provider.getBlockNumber()
+  .then(state => {
+    res.setHeader("Access-Control-Allow-Origin", "*")
+    console.log("getBlockNumber -> " + state.data);
+    res.status(200).json(successString2(state))
+  })
+  .catch(error => {
+    console.log("error: getBlockNumber");
+    console.log(error);
+    res.status(500).json(errorw(error))
+  })
+});
+
+// twitterID -> ethAddress
 router.post("/getAddressFromTwitterID", function(req, res) {
   console.log("getAddressFromTwitterID:", req.body.address);
   _contract_owner.getAddressFromTwitterID(req.body.address)
@@ -203,7 +218,7 @@ router.post("/getWinnerTwitterID", function(req, res) {
 });
 
 blockchain_contract_app.use("/", router);
-blockchain_contract_app.listen(port, () => console.log(`On-Chain contract listening on port ${port}!`));
+blockchain_contract_app.listen(port, () => console.log(`Backend contract listening on port ${port}!`));
 
 /* end of in app server */
 
@@ -333,22 +348,6 @@ const toBuffer2 = v => {
   return Buffer.from(v);
 };
 
-////
-const botOwner = new ethers.Wallet(process.env.KOVAN_PRIVATE_KEY);
-
-////
-class db {
-    constructor(ethAddress, twitterID, screenName, verification, balance) {
-      this.ethAddress = ethAddress;
-      this.twitterID = twitterID;
-      this.userScreenName = screenName;
-      this.verification = verification;
-      this.balance = balance;
-    }
-};
-
-const addressDatabase = {};
-
 var jSig = {
   address: "0x70b674d9220ac9022420023a8c1034ecfadc0e3b",
   msg: "0x68656c6c6f",
@@ -356,6 +355,12 @@ var jSig = {
   version: "3",
   signer: "MEW"
 };
+
+const getBlockNumber = async() =>
+{
+  let latestBlock = provider.getBlockNumber();
+  return latestBlock;
+}
 
 function verifyMessage(message) {
   try
@@ -389,60 +394,6 @@ function verifyMessage(message) {
       }
 };
 
-function signMessage(message) {
-    let _sig = botOwner.signMessage(message);
-      return JSON.stringify(
-        {
-              address: botOwner.address,
-              msg: message,
-              sig: _sig,
-              version: '3',
-              signer: 'MEW'
-        }
-    );
-};
-
-function pairAddressTwitterID(ethAddress, twitterID, screenName) {
-  balance = getEtherBalanceWithAddress("0x" + ethAddress);
-  if (true) {
-    console.log("balance:" + balance)
-
-    const ldb = new db("0x" + ethAddress, twitterID, screenName, 0, true, 0.01);
-
-    addressDatabase[twitterID] = ldb;
-  }
-  
-  return balance;
-}
-
-function isEthAddressVerified(twitterID) {
-  console.log(addressDatabase);
-  if (twitterID in addressDatabase) {
-    return addressDatabase[twitterID].verification
-  }
-
-  return false;
-}
-
-function updateCheckRewardTwit(twit, twitterID)
-{
-  // create cron 1 week.
-  // deliver likes.
-  // trigger
-  // depositor -> addressDatabase[twitterID]
-  // find content etc.
-  //addressDatabase[twitterID].contestID = twit;
-  console.log("twit: ", twit);
-  console.log("id: ", twitterID);
-  console.log("ethAddress: ", addressDatabase[twitterID].ethAddress);
-}
-
-function signContestStart(tweetID)
-{
-  //signMessage
-  return "ID=" + tweetID + " has been started, contest will end in 1 hour.";
-}
-
 const readParametersFromContract = async function(tweetID)
 {
   while(true)
@@ -462,18 +413,6 @@ const readParametersFromContract = async function(tweetID)
   return randSeed;
 };
 
-function readAddressDepositAmount(ethAddress)
-{
-
-}
-
-function readBalanceWithTwitterID(twitterID)
-{
-  return 0;
-}
-
-  //console.log(botOwner.address);
-  //console.log(botOwner.signMessage("hello"));
   //let ssss = signMessage("hello");
   //console.log(ssss);
   /*console.log(verifyMessage(jSig));
@@ -486,13 +425,7 @@ function readBalanceWithTwitterID(twitterID)
 
 module.exports = {
     verifyMessage,
-    signMessage,
-    readBalanceWithTwitterID,
-    readAddressDepositAmount,
-    pairAddressTwitterID,
-    updateCheckRewardTwit,
-    signContestStart,
-    isEthAddressVerified,
+    getBlockNumber,
     readParametersFromContract,
     rewardContractAddress,
     rewardContractRegister,

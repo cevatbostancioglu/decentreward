@@ -14,7 +14,7 @@ const { createRequest } = require('./Resolver');
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
-const port = process.env.EA_PORT || 8080
+const port = process.env.BACKEND_CHAINLINK_NODE_PORT || 8080
 
 app.use(bodyParser.json())
 
