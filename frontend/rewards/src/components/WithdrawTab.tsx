@@ -1,81 +1,149 @@
 import {
-  Input,
   Flex,
-  Text,
   Button,
+  Box,
+  Divider,
   Link,
+  List, ListItem, ListIcon,
   Image,
-  useControllableState
+  useControllableState,
+  useClipboard,
+  Editable,
+  EditableInput,
+  EditablePreview,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
+  Checkbox
 } from "@chakra-ui/react";
 
-import { ExternalLinkIcon } from '@chakra-ui/icons';
+import { ExternalLinkIcon, CloseIcon, CheckIcon, CopyIcon, ArrowRightIcon } from '@chakra-ui/icons';
 
 import { ContractInstanceAxios } from './ContractReadInstanceAxios';
 
-import { UseUCreateNewContest } from "../hooks";
-import { utils } from "ethers";
 import { useEthers, useEtherBalance } from "@usedapp/core";
 
 import decentrewardsbotprofile from "../assets/decentrewardsbotprofile.png"; 
-
-
-const parser = require("twitter-url-parser");
+import w_myetherwallet_message_signed from "../assets/w_myetherwallet_message_signed.png";
+import w_myetherwallet_metamask_sign from "../assets/w_myetherwallet_metamask_sign.png";
+import w_myetherwallet_signmessage from "../assets/w_myetherwallet_signmessage.png";
+import w_twitter_send_signature from "../assets/w_twitter_send_signature.png";
 
 export default function WithdrawTab() {
   
   /* wallet */
   const { account } = useEthers();
-  const etherBalance = useEtherBalance(account);
 
-  const { state, send: sendUCreateNewContest } = UseUCreateNewContest();
-  const [onChainDeposit, setOnChainDeposit] = useControllableState({defaultValue: "0"})
+  const [ signatureChallenge, setSignatureChallenge ] = useControllableState({defaultValue: "Block-1234"})
+  const { hasCopied, onCopy } = useClipboard(signatureChallenge)
 
-  const [ createtwURL, setCreatetwURL ] = useControllableState({defaultValue: ""})
+  const [ onChainBind, setOnChainBind ] = useControllableState({defaultValue: false})
 
-  function CreateNewContest()
+  function CheckTwitterBinding()
   {
-      /*
-      if (parseFloat(onChainDeposit) > 0)
-      {
-          alert("You cannot create contest, you balance is 0, please deposit.");
-      }*/
-      var result = parser(createtwURL);
-      var twID = result.id
-      // result.id = 1521567077773058048
-
-      ContractInstanceAxios.getContestState(twID)
+    ContractInstanceAxios.getTwitterID(account ? account.toString() : "0")
       .then(response => {
-          if(response.data == 0)
-          {
-            sendUCreateNewContest(twID);
-          }
-      })
+        alert(response.data);
+        if (response.data != "")
+        {
+          setOnChainBind(true);
+        }
+        else
+        {
+          setOnChainBind(false);
+        }})
       .catch(error => {
-        alert(error)
+        //axios errors etc.
+        alert(error);
+        setOnChainBind(false);
       })
-  }
-
-  function GetEtherBalanceWithAddress()
-  {
-    ContractInstanceAxios.getEtherBalanceWithAddress(account ? account.toString() : '0')
-        .then(response => {
-          setOnChainDeposit(response.data ? response.data : "<cannot update>");
-        })
-        .catch(error => {
-            //"Cannot Find contest for given twitter
-            setOnChainDeposit(error)
-        })
   }
 
   return (
     <Flex direction="column" align="center" mt="4">
-                <Text>Tweet URL for withdraws</Text>
-                    <Input placeholder="Tweet URL" w="15%" />
-              
-                <Text mt={3} mb={3} > Winner can DM @decentrewardsbot on twitter.</Text>
-                <Link href="https://twitter.com/DecentRewardBot" isExternal > @DecentRewardsBot<ExternalLinkIcon mx="2px" /></Link>
-                <p></p>
-                <Image src={decentrewardsbotprofile} alt="twitter bot profile" mt={5} />
+      <Button mt={4} colorScheme='teal' leftIcon={<ArrowRightIcon />} 
+          onClick={CheckTwitterBinding}> Check On-Chain Binding </Button>
+      <List spacing={4}>
+        <ListItem mt={3} mb={3} >
+          <ListIcon as={onChainBind == false ? CloseIcon : CheckIcon} color={onChainBind == false ? 'red.500' : 'green.500'} />
+            {onChainBind == false ? 
+            "You need to bind your ethereum address and social media profile by following steps." : 
+            "You can withdraw rewards, just send DM with Contest URL to @DecentRewardBot"} </ListItem>
+        <ListItem mt={3} mb={3} > 
+            <Checkbox>Step 1 - Copy Following Text</Checkbox>
+        </ListItem>
+        <Editable defaultValue='Block-1234' isDisabled value={signatureChallenge} onChange={(e) => {setSignatureChallenge(e)}}>
+          <EditablePreview />
+          <EditableInput />
+        </Editable>
+        <Button mt={4} colorScheme='teal' leftIcon={<CopyIcon />} 
+          onClick={onCopy}>Copy</Button>
+        <p></p>
+        <Link href="https://www.myetherwallet.com/wallet/sign" isExternal  mt={3} mb={3} >
+          Step 2 - Visit MyEtherWallet<ExternalLinkIcon mx="2px" /></Link>
+
+        <Accordion allowToggle>
+          <AccordionItem>
+            <h2>
+              <AccordionButton>
+                <Box flex='1' textAlign='left'>
+                  Sign Message on MyEtherWallet
+                </Box>
+                <AccordionIcon />
+              </AccordionButton>
+            </h2>
+            <AccordionPanel pb={4}>
+              <Image src={w_myetherwallet_signmessage}></Image>
+            </AccordionPanel>
+          </AccordionItem>
+          <AccordionItem>
+            <h2>
+              <AccordionButton>
+                <Box flex='1' textAlign='left'>
+                  Approve Message on Metamask
+                </Box>
+                <AccordionIcon />
+              </AccordionButton>
+            </h2>
+            <AccordionPanel pb={4}>
+              <Image src={w_myetherwallet_metamask_sign}></Image>
+            </AccordionPanel>
+          </AccordionItem>
+          <AccordionItem>
+            <h2>
+              <AccordionButton>
+                <Box flex='1' textAlign='left'>
+                  Copy Signed Message on MyEtherWallet
+                </Box>
+                <AccordionIcon />
+              </AccordionButton>
+            </h2>
+            <AccordionPanel pb={4}>
+              <Image src={w_myetherwallet_message_signed}></Image>
+            </AccordionPanel>
+          </AccordionItem>
+          <AccordionItem>
+            <h2>
+              <AccordionButton>
+                <Box flex='1' textAlign='left'>
+                  Send DM to @DecentRewardBot, Bot will bind ethereum address and twitter user id.
+                </Box>
+                <AccordionIcon />
+              </AccordionButton>
+            </h2>
+            <AccordionPanel pb={4}>
+              <Image src={w_twitter_send_signature}></Image>
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
+      </List>
+      <Link mt={3} mb={3} href="https://twitter.com/DecentRewardBot" isExternal > @DecentRewardBot Twitter<ExternalLinkIcon mx="2px" /></Link>
+      <Divider orientation='horizontal' mb={3} mt={3} w="100%"/>
+
+      <Image src={decentrewardsbotprofile} alt="twitter bot profile" mt={5} />
+
     </Flex>
   );
 }

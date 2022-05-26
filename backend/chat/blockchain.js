@@ -57,6 +57,13 @@ function successString(response) {
   }
 }
 
+function successString2(response) {
+  return {
+    data: response.toString(),
+    statusCode: 200,
+  }
+}
+
 function errorw(response) {
   return {
     data: response,
@@ -146,6 +153,38 @@ router.post("/getEtherBalanceWithAddress", function(req, res) {
   })
   .catch(error => {
     console.log("error: getEtherBalanceWithAddress");
+    console.log(error);
+    res.status(500).json(errorw(error))
+  })
+});
+
+// twitterID -> ethAddress
+router.post("/getTwitterID", function(req, res) {
+  console.log("getTwitterID:", req.body.address);
+  _contract_owner.getTwitterID(req.body.address)
+  .then(state => {
+    res.setHeader("Access-Control-Allow-Origin", "*")
+    console.log("getTwitterID:" + req.body.address + " :" + state);
+    res.status(200).json(successString2(state))
+  })
+  .catch(error => {
+    console.log("error: getTwitterID");
+    console.log(error);
+    res.status(500).json(errorw(error))
+  })
+});
+
+// twitterID -> ethAddress
+router.post("/getAddressFromTwitterID", function(req, res) {
+  console.log("getAddressFromTwitterID:", req.body.address);
+  _contract_owner.getAddressFromTwitterID(req.body.address)
+  .then(state => {
+    res.setHeader("Access-Control-Allow-Origin", "*")
+    console.log("getAddressFromTwitterID:" + req.body.address + " :" + state);
+    res.status(200).json(successString2(state))
+  })
+  .catch(error => {
+    console.log("error: getAddressFromTwitterID");
     console.log(error);
     res.status(500).json(errorw(error))
   })
@@ -243,8 +282,8 @@ const rewardContractGetEthAddress = async (twitterID) =>
 {
   console.log("rewardContractGetEthAddress -> ", twitterID)
   // twitterIDAddress[twitterID]
-  let tx = await _contract_owner.getAddressFromTwitterID(twitterID.toString());
-  return tx;
+  let ethAddress = await _contract_owner.getAddressFromTwitterID(twitterID.toString());
+  return ethAddress;
 }
 
 const rewardContractBotCreateContest = async(twitterID, tweetID) =>
