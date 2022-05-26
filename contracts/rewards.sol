@@ -20,6 +20,8 @@ import "../chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
 
 contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
+	uint8 public feeRatePercentage = 5;
+
 	/* Safe Math */
 	using SafeMath for uint256;
 	/* End of Safe Math */
@@ -181,6 +183,11 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		}
 		else
 		{
+			//feeRatePercentage
+			uint256 feeResult = contest[tweetID].rewardAmount.mul(feeRatePercentage);
+			feeResult = feeResult.div(100);
+			userEthDeposits[owner()] = userEthDeposits[owner()].add(feeResult);
+			contest[tweetID].rewardAmount = contest[tweetID].rewardAmount.sub(feeResult);
 			winnerEthAmount[_contestWinner] = winnerEthAmount[_contestWinner].add(contest[tweetID].rewardAmount);
 			return true;
 		}
@@ -215,6 +222,15 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 
 		userDeposits[msg.sender][linkTokenAddress] += amount;
 		emit tokenDepositComplete(linkTokenAddress, amount);
+	}
+
+	function withdrawContractOwnerFund(address payable fundManager)
+		public
+		onlyOwner
+	{
+		require(userEthDeposits[owner()] > 0);
+		fundManager.transfer(userEthDeposits[owner()]);
+		userEthDeposits[owner()] = 0;
 	}
 
 	// withdraw reward
@@ -383,7 +399,22 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		fakeVRF = _new;
 	}
 
+	function setFeeRate(uint8 _newRatePercentage)
+		public
+		onlyOwner
+	{
+		feeRatePercentage = _newRatePercentage;
+	}
+
 	// get functions
+
+	function getContractOwnerFund()
+		public
+		view
+		returns(uint256)
+	{
+		return userEthDeposits[owner()];
+	}
 
 	function getContestOwner(string memory twitterID)
 		public
