@@ -38,6 +38,8 @@ Organizers/users **can manage their rewards/giveaways by sending Twitter Direct 
 - Web2 API limitations:
 Twitter API V2 offers essential/elevated/academic research packages. Using their API with current request limits creates scalability and API serving issues in the project itself. It can be solved using Chainlink Decentralized Oracle Network technology.
 
+- Data trust: What happens if API responds unexpected data ?
+
 These challenges are not completely solved now but changed our perspective about Chainlink's Decentralized Oracle Networks. Our future prospect is enabling Decentralized Oracle Network service to overcome current challenges. DONs can overcome API request limitations by load balancing. Data trust issues can be solved by [Chainlink's Explicit Staking model](https://blog.chain.link/explicit-staking-in-chainlink-2-0/).
 
 ## Accomplishments that we're proud of
@@ -64,5 +66,6 @@ These challenges are not completely solved now but changed our perspective about
 - Enable technology for managing Web3 assets from the Web2 world in the most secure way.
 - Enable other Web3 projects to utilize Decent Rewards project as a management interface.
 - Build cryptographically secure trust between Web2/Web3 world.
+- [Future Plans Doc](https://github.com/cevatbostancioglu/decentreward/doc/blob/main/README_future.md)
 
-[Github Repo](https://github.com/cevatbostancioglu/decentreward])
+[Github Repo and Documentation](https://github.com/cevatbostancioglu/decentreward])
