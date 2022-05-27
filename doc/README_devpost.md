@@ -9,6 +9,12 @@ Cryptography and blockchains provide almost everything for people to share anyth
 
 **Most of the Web3 assets rewards/giveaways are organized on Web2 platforms in old fashion way. Organizers decide who to win(lack of transparency and trust issue), people comment on their Web3 addresses to get prizes(lack of software automation), bots are attending everything(filtering issue), organizers are distributing their assets to bots, and organizer's main targets are giving up because people cannot compete with bots, because lack of transparency, trust issues, economically worst results for both sides. It creates more issues than they solve and giveaways/rewards do not worth to spent time on with the current model.**
 
+As a result, Decentralized Rewards Project(DecentRewardBot) trying to solve following issues in Web2 Platforms:
+- Lack of transparency and trust issues
+- Lack of software automation
+- Bots floading everything
+- Lack of ROI for both organizers and attendees
+
 ## What it does
 
 Decentralized Rewards Project creates automation infrastructure for people who organizes giveaways using Web2 platforms for Web3 assets. It provides a truth/trust model for both giveaway organizers and candidates/users.
