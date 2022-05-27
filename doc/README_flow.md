@@ -1,5 +1,6 @@
 
-## Data Flow for managing rewards using Twitter Direct Message
+# Data Flow for managing rewards using Twitter Direct Message
+
 ```mermaid
 sequenceDiagram
     participant Organizer
@@ -37,9 +38,10 @@ sequenceDiagram
     Organizer->>Organizer: Execute proof locally
     Organizer->>Organizer: Happy
 ```
+## Execute proof locally
+[README How anyone can execute proof locally](https://github.com/cevatbostancioglu/decentreward/blob/main/tools/README_proof.md)
 
-
-## Data Flow for managing rewards Web Interface
+# Data Flow for managing rewards Web Interface
 ```mermaid
 sequenceDiagram
     participant Organizer
@@ -76,7 +78,7 @@ sequenceDiagram
     User->>User: Happy
 ```
 
-## Smart Contract - Oracles - Backend - WEB2 - IPFS flow
+# Smart Contract - Oracles - Backend - WEB2 - IPFS flow
 ```mermaid
 sequenceDiagram
     participant Contract

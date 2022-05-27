@@ -1,6 +1,6 @@
-## Development Flow:
+# Development Flow:
 
-# Install dependencies
+## Install dependencies
 ```
 # scripts are using jq for parsing json
 apt-get install -y jq git curl wget
@@ -10,7 +10,7 @@ apt-get install -y jq git curl wget
 
 ```
 
-# Git submodules
+## Git submodules
 ```
 git clone https://github.com/cevatbostancioglu/decentreward.git
 cd decentreward
@@ -60,7 +60,7 @@ graph TD;
     EtherScan-->DecentRewardsContract;
 ```
 
-# .env.example modification
+## .env.example modification
 
 ```
 # How to generate and use following Twitter API tokens.
@@ -115,19 +115,19 @@ cp .env.example backend/chat/.env
 sed -i 's/export //g' backend/chat/.env
 ```
 
-# Backend
+## Backend
 ```
 cd backend/chat
 node index
 ```
 
-# Frontend
+## Frontend
 ```
 cd frontend/rewards
 npm start
 ```
 
-# Smart Contract Deployment
+## Smart Contract Deployment
 ```
 ./clean.sh 
 #./clean_except_oracle.sh
@@ -139,7 +139,7 @@ npm start
 ./verify_oracle.sh
 ```
 
-# Chainlink Node
+## Chainlink Node
 ```
 cd cl_node
 ./start.sh

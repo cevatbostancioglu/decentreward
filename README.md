@@ -5,11 +5,11 @@
 
 This document will explain technical aspect of project.
 
-A project aiming to solve Web3 asset giveaways on Web2 platform using smart contracts, chainlink oracle services and IPFS web3.storage service.
+A project aiming to solve Web3 asset giveaways on Web2 platform using smart contracts, chainlink oracle service, chainlink VRF service and IPFS web3.storage service.
 
 [Chainlink Spring 2022 Hackathon devpost Link](https://github.com/cevatbostancioglu/decentreward])
 
-## SW Architecture
+# SW Architecture
 
 All connections:
 ```mermaid

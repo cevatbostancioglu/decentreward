@@ -1,20 +1,5 @@
-## Future with WEB3 asset management from WEB2 Platforms
-```mermaid
-sequenceDiagram
-    participant User
-    participant DM_BOT
-    participant SmartContract
-    User->>DM_BOT: uniswapv3.swap(wETH, renBTC);
-    DM_BOT->>SmartContract: Resolve(USER).uniswapv3.swap(wETH, renBTC)
-    SmartContract-->DM_BOT: Adds fee to DM_BOT eth addresss.
-    SmartContract->>UniswapV3: uniswapv3.swap(wETH, renBTC)
-    SmartContract-->SmartContract: User.balance += renBTC
-    SmartContract-->SmartContract: User.balance -= wEth
-    DM_BOT-->SmartContract: What is user current balances
-    DM_BOT->>User: Done, your new balances..
-```
+# Future with DONs
 
-## Future with DONs
 Flow:
 - Organizer request rewards distribution and 3 Chainlink Nodes aggregate data and deliver data to multiple chains.
 - DONN_2 dont have TwitterAPI, forwards request to DONN_1.
@@ -58,4 +43,20 @@ graph TD;
     ResponseAggregate-->SmartContract_BNB;
     Organizer-->DistributeAllWEB2Rewards;
     DistributeAllWEB2Rewards-->SmartContract;
+```
+
+# Future with WEB3 asset management from WEB2 Platforms
+```mermaid
+sequenceDiagram
+    participant User
+    participant DM_BOT
+    participant SmartContract
+    User->>DM_BOT: uniswapv3.swap(wETH, renBTC);
+    DM_BOT->>SmartContract: Resolve(USER).uniswapv3.swap(wETH, renBTC)
+    SmartContract-->DM_BOT: Adds fee to DM_BOT eth addresss.
+    SmartContract->>UniswapV3: uniswapv3.swap(wETH, renBTC)
+    SmartContract-->SmartContract: User.balance += renBTC
+    SmartContract-->SmartContract: User.balance -= wEth
+    DM_BOT-->SmartContract: What is user current balances
+    DM_BOT->>User: Done, your new balances..
 ```
