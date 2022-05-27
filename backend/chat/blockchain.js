@@ -252,7 +252,8 @@ const rewardContractGetContestRewardAmount = async(tweetID) =>
 
 // contest winner twitter id, tweet id
 const rewardContractwithdrawWinnerReward = async(tweetID, ethAddress) => {
-  console.log("rewardContractwithdrawWinnerReward ->twitter", tweetID)
+  console.log("rewardContractwithdrawWinnerReward ->twitter" + 
+      tweetID + ", ethAddress:" + ethAddress.toString()); 
   let tx = _contract_owner.withdrawWinnerReward(tweetID.toString(), ethAddress.toString())
 
   return tx.hash
@@ -301,10 +302,14 @@ const rewardContractGetEthAddress = async (twitterID) =>
 
 const rewardContractBotCreateContest = async(twitterID, tweetID) =>
 {
+  console.log("rewardContractBotCreateContest -> " + twitterID + " -> " + tweetID);
+
   let contestOwner = await rewardContractGetEthAddress(twitterID.toString());
+  console.log("rewardContractBotCreateContest -> ownerEth ->" + contestOwner);
 
   if (contestOwner == "0x0000000000000000000000000000000000000000")
   {
+    console.log("owner is 0x00 ?? not registered");
     let m = "Please deposit using \n" +
     "http://localhost:3000/ \n" + 
     "https://rinkeby.etherscan.io/address/" + rewardContractAddress + "#writeContract \n";

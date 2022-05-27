@@ -76,15 +76,23 @@ async function indicateTyping(senderID, auth) {
     await post(requestConfig);
 }
 
-const replyTweet = async (userScreenName, tweetID, textMessage) => {
-  //await twitterClient.v1.reply("@" + userScreenName + " " + textMessage, tweetID);
+const replyTweet = async (username, tweetID, textMessage) => {
+  //await twitterClient.v1.reply("@" + username + " " + textMessage, tweetID);
   
-  T.post('statuses/update', {status: "@" + userScreenName + " " + textMessage, in_reply_to_status_id: tweetID }, 
+  T.post('statuses/update', {status: "@" + username + " " + textMessage, in_reply_to_status_id: tweetID }, 
     function (err, data, response) {
       console.log("sent reply tweet.");
   });
   //replyTweet("GodModeInvestor", "1523825807243812865", "hello");
 };
+
+const justTweet = async(tweetID, textMessage) => {
+  console.log("Twitter API access issues, passing justTweet now.");
+  return;
+  const createdTweet = await twitterClient.v1.tweet("twitter.com/anyuser/status/" + 
+        tweetID + "\n " + textMessage);
+  console.log('Tweet', createdTweet.id_str, ':', createdTweet.full_text);
+}
 
 const userLookUpFromID = async(twitterID) => {
   //https://github.com/PLhery/node-twitter-api-v2/blob/53b0daf4b34fe158e12bd20038981938cc092085/doc/v2.md#UsersbyID
@@ -111,7 +119,6 @@ const tweetLikedBy = async function(id) {
     allIDs.push(user);
   }
   //uniq = allIDs;//[...new Set(allIDs)]; // remove duplicates
-  
   console.log("tweetLikedBy done, length:", allIDs.length);
 
   return allIDs;
@@ -135,6 +142,11 @@ const replyDMMessage = async (message, textMessage) => {
       message.message_create.sender_id ===
       message.message_create.target.recipient_id
     ) {
+      return;
+    }
+
+    if (textMessage.length == 0)
+    {
       return;
     }
 
@@ -226,7 +238,7 @@ const classifyAndAnswerDM = async (event) => {
   }
   else if (message_toLowerCase == "deposit")
   {
-    textMessage = "Please deposit using our website or etherscan \n" +
+    textMessage = "Please deposit using our website or etherscan(depositEther) \n" +
     "http://localhost:3000/ \n" + 
     "https://rinkeby.etherscan.io/address/" + rewardContractAddress + "#writeContract \n";
   }
@@ -266,14 +278,7 @@ const classifyAndAnswerDM = async (event) => {
   else if (messagecommands.length > 1)
   {
     console.log(messagecommands[0] +"->" + message.message_create.sender_id + " -> " + messagecommands[1]);
-    if(messagecommands[0] == "register12331231231213231555")
-    {
-      textMessage = "Message queried to blockchain, you will get tx info soon";
-      let txHash = await rewardContractRegister(messagecommands[1], message.message_create.sender_id)
-      let m = "https://rinkeby.etherscan.io/tx/" + txHash
-      replyDMMessage(message, m);
-    }
-    else if(messagecommands[0] == "create")
+    if(messagecommands[0] == "create")
     {
       if (messagecommands[1].toString().includes("https://t.co/"))
       {
@@ -282,21 +287,26 @@ const classifyAndAnswerDM = async (event) => {
       else
       {
         let balance = await rewardDepositBalanceWithTwitterID(message.message_create.sender_id);
-
+        console.log("create.balance.check=", balance);
         // balance check not working for now. @todo
-        if (balance > 0.01)
+        if (balance < 0.01)
         {
-          textMessage = "Your balance is not enough for contest, please deposit using \n" +
+          textMessage = "Your balance is not enough for contest, please deposit using(depositEther) \n" +
           "http://localhost:3000/ \n" + 
           "https://rinkeby.etherscan.io/address/" + rewardContractAddress + "#writeContract \n";
         }
         else
         {
+          console.log("create.balance check done");
           textMessage = "Message queried to blockchain, you will get tx info soon";
           let txHash = await rewardContractBotCreateContest(message.message_create.sender_id, 
               messagecommands[1]);
-          let m = "https://rinkeby.etherscan.io/tx/" + txHash
-          replyDMMessage(message, m);
+            
+            let m = "https://rinkeby.etherscan.io/tx/" + txHash
+
+            replyDMMessage(message, m);
+
+            justTweet(messagecommands[1], " New giveaway created(" + messagecommands[1] + "), :" + m);
         }
       }
     }
@@ -379,6 +389,8 @@ const classifyAndAnswerDM = async (event) => {
           let txHash = await rewardContractRequestProofFromNode(messagecommands[1]);
           let m = "https://rinkeby.etherscan.io/tx/" + txHash
           replyDMMessage(message, m);
+
+          justTweet(messagecommands[1], "Contest finished, tx:" + m);
         }
       }
     }
@@ -428,8 +440,8 @@ const classifyAndAnswerDM = async (event) => {
             else
             {
               textMessage = "Message queried to blockchain, you will get tx info soon";
-              let txHash = await rewardContractwithdrawWinnerReward(message.message_create.sender_id, 
-                  messagecommands[1]);
+              let txHash = await rewardContractwithdrawWinnerReward(messagecommands[1], 
+                        winnerEthAddress.toString());
               let m = "https://rinkeby.etherscan.io/tx/" + txHash
               replyDMMessage(message, m);
             }
@@ -443,24 +455,6 @@ const classifyAndAnswerDM = async (event) => {
       "latest block number: https://etherscan.io/blocks, sign using myEtherWallet(https://www.myetherwallet.com/wallet/sign)," +
       " and copy the result here."
     }
-    /*
-    else if (message_toLowerCase.includes("start:"))
-    {
-      console.log(message_toLowerCase);
-      let tweetID = message_itself.substr(6);
-
-      if (isEthAddressVerified(senderID))
-      {
-        updateCheckRewardTwit(tweetID, senderID);
-        textMessage = signContestStart(tweetID);
-        replyTweet(userName, tweetID, textMessage);
-      }
-      else
-      {
-        textMessage = "Eth Verification failed, please type verify for more instructions.";
-      }
-    }
-    */
     else {
       textMessage = helpText
     }
