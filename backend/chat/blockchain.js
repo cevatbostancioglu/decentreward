@@ -22,8 +22,6 @@ console.log("deployer(test2):", test2.address);
 console.log("user(test1):", test1.address);
 console.log("contract_address:", contractAddress.name);
 
-// Then, we initialize the contract using that provider and the token's
-// artifact. You can do this same thing with your contracts.
 _contract_owner = new ethers.Contract(
     contractAddress.name,
     contractArtifact.abi,
@@ -396,32 +394,40 @@ function verifyMessage(message) {
 
 const readParametersFromContract = async function(tweetID)
 {
+  var count = 0;
   while(true)
   {
+    count++;
     let vrf_arrived = await _contract_owner.getContestState(tweetID);
-    console.log("vrf state: ", vrf_arrived);
-
+    console.log("vrf state: " + vrf_arrived + " , elapsed:" + count + "s");
     if (vrf_arrived >= 3)
     {
       console.log("vrf_arrived, breaking..");
       break;
     }
+
+    // 10 minutes
+    if(count == 550)
+    {
+      console.log("its been 10 minutes since request arrived, we need to return something.")
+      //let tx = await _contract_owner.setContestState(tweetID.toString(), 1);
+      break; 
+    }
+
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  let randSeed = await _contract_owner.getRandomSeed(tweetID);
-  return randSeed;
-};
-
-  //let ssss = signMessage("hello");
-  //console.log(ssss);
-  /*console.log(verifyMessage(jSig));
-  if (verifyMessage(jSig).verified == true)
+  if(count >= 600)
   {
-    console.log("true");
-  }*/
-  //let ssss = signContestStart("https://t.co/ivHRig6e3E");
-  //console.log(ssss);
+    // maxTwitterLikes -> 1000000000 
+    return Math.random() * 1000000000;
+  }
+  else
+  {
+    let randSeed = await _contract_owner.getRandomSeed(tweetID);
+    return randSeed;
+  }
+};
 
 module.exports = {
     verifyMessage,

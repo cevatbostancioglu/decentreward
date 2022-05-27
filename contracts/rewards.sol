@@ -1,23 +1,16 @@
 pragma solidity ^0.8.7;
 // SPDX-License-Identifier: MIT
 
-// @godmodeinvestor => 0x70B674D9220aC9022420023A8C1034EcfaDc0E3B -> 308399201
-// @decentrewardbot => 0x06b911ACca1000823054D9f17424198b076faF86 -> 1518535984320851968
-
 import "../openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import "../openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-//import "./IDPairing.sol";
 // VRF
 import "../chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "../chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "../chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
-//import "./ApiConsumer.sol";
-
 //import "../chainlink/contracts/src/v0.8/KeeperCompatible.sol";
-
 
 contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	uint8 public feeRatePercentage = 5;
@@ -34,12 +27,10 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 
 	//VRF
 
-	bool public fakeVRF = true;
+	bool public fakeVRF = false;
 
 	VRFCoordinatorV2Interface COORDINATOR;
 	
-	address public linkTokenAddress;
-
 	// Your subscription ID.
 	uint64 s_subscriptionId;
 	// Rinkeby coordinator. For other networks,
@@ -55,7 +46,7 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	// this limit based on the network that you select, the size of the request,
 	// and the processing of the callback request in the fulfillRandomWords()
 	// function.
-	uint32 callbackGasLimit = 100000;
+	uint32 public callbackGasLimit = 200000;
 	// The default is 3, but you can set this higher.
 	uint16 requestConfirmations = 3;
 
@@ -92,9 +83,6 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	// vrf requestID -> contest ID
    	mapping(uint256 => string) contestVRFRequestIDTable;
 
-	// userAddress => tokenAddress => token amount
-   	mapping(address => mapping (address => uint256)) userDeposits;
-
 	// winnerTwitterID 
 	mapping(string => uint256) winnerEthAmount;
 
@@ -109,8 +97,8 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
    	constructor(address _link, address _oracle, uint64 subscriptionId) 
 	   	VRFConsumerBaseV2(vrfCoordinator)
    	{
+		COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
 		s_subscriptionId = subscriptionId;
-		linkTokenAddress = _link;
 		setChainlinkToken(_link);
 		setChainlinkOracle(_oracle);
 	}
@@ -136,8 +124,7 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		contest[tweetID].rewardAmount = contest[tweetID].rewardAmount.add(userEthDeposits[msg.sender]);
 	  	userEthDeposits[msg.sender] = 0;
 	  	contest[tweetID].contestState = EContestState.CONTEST_CREATED;
-	  	//userDeposits[msg.sender][linkTokenAddress] = userDeposits[msg.sender][linkTokenAddress].sub(rewardAmount);
-		
+
 	  	emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
 
@@ -155,7 +142,6 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	  	contest[tweetID].rewardAmount = contest[tweetID].rewardAmount.add(userEthDeposits[msg.sender]);
 		userEthDeposits[msg.sender] = 0;
 		contest[tweetID].contestState = EContestState.CONTEST_CREATED;
-	  	//userDeposits[msg.sender][linkTokenAddress] = userDeposits[msg.sender][linkTokenAddress].sub(rewardAmount);
 
 		emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
@@ -163,7 +149,7 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	// trigger reward distro
    	function triggerRewardDistrobution(string memory tweetID)
 		private
-		onlyOwnerOrContestOwner(tweetID)
+		onlyOwnerContestOwnerOrWinner(tweetID)
 	  	onlyValidContest(tweetID)
 	  	onlyContestState(tweetID, EContestState.CONTEST_PROOF_DELIVERED)
 			returns(bool)
@@ -173,7 +159,7 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		
 		string memory _contestWinner = contest[tweetID].winnerTwitterID;
 		
-		// no one liked the tweet, refund back.
+		// no one liked the tweet, refund back without fee.
 		if(compareStrings(_contestWinner, "0") == true)
 		{
 			address contestOwner = contest[tweetID].contestOwner;
@@ -202,28 +188,6 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	  	return userEthDeposits[msg.sender];
 	}
 
-	// ERC20 all
-	event tokenDepositComplete(address tokenAddress, uint256 amount);
-	
-   	/* erc20 deposit disabled */
-	/*function approveToken(uint256 amount) public onlyOwner
-	{
-
-	}*/
-
-	/* erc20 deposit disabled */
-	function depositToken(uint256 amount) public onlyOwner
-	{
-		require(IERC20(linkTokenAddress).balanceOf(msg.sender) >= amount, 
-			"Your token amount must be greater then you are trying to deposit");
-
-		require(IERC20(linkTokenAddress).approve(address(this), amount));
-		require(IERC20(linkTokenAddress).transferFrom(msg.sender, address(this), amount));
-
-		userDeposits[msg.sender][linkTokenAddress] += amount;
-		emit tokenDepositComplete(linkTokenAddress, amount);
-	}
-
 	function withdrawContractOwnerFund(address payable fundManager)
 		public
 		onlyOwner
@@ -236,13 +200,9 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	// withdraw reward
 	function withdrawWinnerReward(string memory tweetID, address payable contestWinner)
 		public
-		onlyOwnerOrContestOwner(tweetID)
+		onlyOwnerContestOwnerOrWinner(tweetID)
 		onlyValidContest(tweetID)
 	{
-		/*require(IERC20(linkTokenAddress).transfer(contestWinner, contest[tweetID].rewardAmount), 
-			"transfer failed.");
-		*/
-
 		bool r = triggerRewardDistrobution(tweetID);
 		
 		require(contest[tweetID].contestState == EContestState.CONTEST_WINNER_LOTTERY_DONE);
@@ -270,7 +230,7 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 	function requestProofFromNode(string memory tweetID)
 		public
 		onlyOwnerOrContestOwner(tweetID)
-	  	onlyContestStateGE(tweetID, EContestState.CONTEST_CREATED)
+	  	onlyContestState(tweetID, EContestState.CONTEST_CREATED)
    	{
 		// only owner or user itself.
 		Chainlink.Request memory req = buildChainlinkRequest(specId, address(this), this.fulfillBytes.selector);
@@ -281,25 +241,34 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 
 		contest[tweetID].contestState = EContestState.CONTEST_RANDOM_AND_PROOF_REQUESTED;
 		
+		/* false by default. */
 		if ( fakeVRF == true)
 		{	
 			contest[tweetID].randomSeed = uint256(keccak256(abi.encodePacked(block.timestamp,block.difficulty, msg.sender))) % maxTwitterLikes;
 			contest[tweetID].contestState = EContestState.CONTEST_RANDOM_DELIVERED; // on-chain.
 		}
+		else
+		{
+			requestRandomSeed(tweetID);
+		}
+
 		emit updateContestState(tweetID, contest[tweetID].contestState);
    	}   
 
    	// VRF and External API
    	// Assumes the subscription is funded sufficiently.
-   	function requestRandomSeed(string memory tweetID) 
-		external 
-		onlyValidContest(tweetID) 
-		onlyOwner
+   	function requestRandomSeed(string memory tweetID)
+		public
+		onlyOwnerOrContestOwner(tweetID)
 		onlyContestState(tweetID, EContestState.CONTEST_RANDOM_AND_PROOF_REQUESTED)
 	{
+		/* false by default. */
 		if ( fakeVRF == true)
 		{
-			contest[tweetID].randomSeed = uint256(keccak256(abi.encodePacked(block.timestamp,block.difficulty, msg.sender))) % maxTwitterLikes;
+			contest[tweetID].randomSeed = uint256(keccak256(abi.encodePacked(block.timestamp,
+											block.difficulty, msg.sender))) % maxTwitterLikes;
+
+			contest[tweetID].contestState = EContestState.CONTEST_RANDOM_AND_PROOF_REQUESTED;
 			contest[tweetID].contestState = EContestState.CONTEST_RANDOM_DELIVERED; // on-chain.
 		}
 		else
@@ -314,7 +283,10 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 				1
 			);
 			contestVRFRequestIDTable[s_requestId] = tweetID;
+			//contest[tweetID].contestState = EContestState.CONTEST_RANDOM_AND_PROOF_REQUESTED;
 		}
+
+		emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
 
 	event RequestRandomFulfilled(
@@ -328,10 +300,11 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
    	) internal override
    	{
 		/* override */
-		string memory tweetID = getContestIDFromVRFRequest(requestID);
+		string memory tweetID = contestVRFRequestIDTable[requestID];
 		/* is % still makes it random ? */
 		contest[tweetID].randomSeed = randomWords[0] % maxTwitterLikes;
 		contest[tweetID].contestState = EContestState.CONTEST_RANDOM_DELIVERED;
+
 		emit RequestRandomFulfilled(requestID, randomWords);
 		emit updateContestState(tweetID, contest[tweetID].contestState);
    	}
@@ -356,13 +329,6 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		public
 	  	recordChainlinkFulfillment(requestId)
    	{
-		/*
-		require(tweetID > 0);
-		require(contest[tweetID].rewardAmount > 0);
-		require(candidatesIDs.length > 0);
-		public onlyOwner
-			onlyContestState(tweetID, EContestState.CONTEST_CREATED)
-		*/
 		string memory tweetID = _data[0];
 		contest[tweetID].winnerTwitterID = _data[1];
 		contest[tweetID].ipfsLocation = _data[2];
@@ -391,6 +357,13 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		addressTwitterID[userAddress] = twitterID;
 		twitterIDAddress[twitterID] = userAddress;
    	}
+
+	function setCallBackGasLimit(uint32 _new)
+		public
+		onlyOwner
+	{
+		callbackGasLimit = _new;
+	}
 
 	function setFakeVRF(bool _new)
 		public
@@ -521,6 +494,13 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		_;
 	}
 
+	modifier onlyOwnerContestOwnerOrWinner(string memory tweetID) {
+		require((contest[tweetID].contestOwner == msg.sender) || 
+			(owner() == msg.sender) || 
+			(compareStrings(addressTwitterID[msg.sender], contest[tweetID].winnerTwitterID) == true), "only contest owner or owner can trigger");
+		_;
+	}
+
    	modifier onlyEmptyContest(string memory newContestID) {
 		require(bytes(newContestID).length > 0);
 		require(contest[newContestID].contestOwner == address(0));
@@ -561,12 +541,6 @@ contract DRewards is Ownable, ChainlinkClient, VRFConsumerBaseV2 {
 		require(contest[tweetID].contestState < state);
 		_;
    	}
-
-	modifier onlyLink(address tokenAddress)
-	{
-		require(tokenAddress == linkTokenAddress);
-		_;
-	}
 	
    	modifier onlyValidContest(string memory tweetID) {
 		require(bytes(tweetID).length > 0);
