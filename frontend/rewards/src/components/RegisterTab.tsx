@@ -71,13 +71,14 @@ export default function RegisterTab() {
         else
         {
           setOnChainBind(false);
-          GetBlockNumber();
         }})
       .catch(error => {
         //axios errors etc.
         alert(error);
         setOnChainBind(false);
       })
+    
+    GetBlockNumber();
   }
 
   return (

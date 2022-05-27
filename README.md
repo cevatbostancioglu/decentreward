@@ -52,3 +52,8 @@ All connections:
 
 [README Future prospects](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_flow.md)
 
+# Short Video Presentation - 6 min
+https://www.youtube.com/watch?v=rFgiTfpJxqg
+
+# Video Presentation - 12 min
+https://www.youtube.com/watch?v=ckKPVWUjE6Q
