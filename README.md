@@ -48,5 +48,7 @@ All connections:
 
 [README Data Flow across dapp/applications/servers/api endpoints](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_flow.md)
 
+[README Project Economy](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_economy.md)
+
 [README Future prospects](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_flow.md)
 
