@@ -50,7 +50,7 @@ All connections:
 
 [README Project Economy](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_economy.md)
 
-[README Future prospects](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_flow.md)
+[README Future prospects](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_future.md)
 
 # Short Video Presentation - 6 min
 https://www.youtube.com/watch?v=rFgiTfpJxqg

@@ -2,7 +2,8 @@ import { Flex, Tabs,
     TabList, 
     TabPanels, 
     Tab, 
-    TabPanel, 
+    TabPanel,
+    Link
 } from '@chakra-ui/react'
 
 
@@ -60,7 +61,26 @@ export default function OptionTabs() {
                     </Tabs>
                 </TabPanel> {/* end of mgmt tab */}
                 <TabPanel> {/* Documents tab */}
-                    
+                    <Link color='teal.500' href='https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_dev.md'>
+                    developers
+                    </Link>
+                    <p></p>
+                    <Link color='teal.500' href='https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_devpost.md'>
+                    Chainlink Hackathon SP 2022 - devpost
+                    </Link>
+                    <p></p>
+                    <Link color='teal.500' href='https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_flow.md'>
+                    Data Flow across dapp/applications/servers/api endpoints
+                    </Link>
+                    <p></p>
+                    <Link color='teal.500' href='https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_economy.md'>
+                    Project Economy
+                    </Link>
+                    <p></p>
+                    <Link color='teal.500' href='https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_flow.md'>
+                    Future prospects
+                    </Link>
+                    <p></p>
                 </TabPanel> {/* Documents tab */}
             </TabPanels>
         </Tabs> {/* main tab end */}
