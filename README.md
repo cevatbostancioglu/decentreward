@@ -42,8 +42,11 @@ All connections:
       USER-->Tweet-DM-Status
 ```
 
-[README developers](docs/README_dev.md)
-[README Chainlink Hackathon Spring 2022 - devpost - informative](docs/README_devpost.md)
-[README Data Flow across dapp/applications/servers/api endpoints](docs/README_flow.md)
-[README Future prospects](docs/README_flow.md)
+[README developers](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_dev.md)
+
+[README Chainlink Hackathon Spring 2022 - devpost - informative](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_devpost.md)
+
+[README Data Flow across dapp/applications/servers/api endpoints](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_flow.md)
+
+[README Future prospects](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_flow.md)
 

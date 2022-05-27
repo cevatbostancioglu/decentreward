@@ -66,6 +66,6 @@ These challenges are not completely solved now but changed our perspective about
 - Enable technology for managing Web3 assets from the Web2 world in the most secure way.
 - Enable other Web3 projects to utilize Decent Rewards project as a management interface.
 - Build cryptographically secure trust between Web2/Web3 world.
-- [Future Plans Doc](https://github.com/cevatbostancioglu/decentreward/doc/blob/main/README_future.md)
+- [Future Plans Doc](https://github.com/cevatbostancioglu/decentreward/blob/main/doc/README_future.md)
 
 [Github Repo and Documentation](https://github.com/cevatbostancioglu/decentreward])
