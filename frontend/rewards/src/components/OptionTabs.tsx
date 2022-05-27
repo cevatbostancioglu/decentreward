@@ -9,6 +9,8 @@ import { Flex, Tabs,
 import DepositTab from './Deposit';
 import CreateTab from './Create';
 import StatusTab from './StatusTab';
+import RegisterTab from './RegisterTab';
+import FinishTab from './Finish';
 import WithdrawTab from './WithdrawTab';
 
 export default function OptionTabs() {
@@ -19,13 +21,18 @@ export default function OptionTabs() {
         <Flex width="full" align="center" justifyContent="center">
         <Tabs variant='soft-rounded' colorScheme='gray' align='center' isFitted mt={20}>
         <TabList>
+            <Tab>Register</Tab>
             <Tab>Deposit</Tab>
             <Tab>Create</Tab>
             <Tab>Status</Tab>
-            <Tab>Withdraws</Tab>
+            <Tab>Finish</Tab>
+            <Tab>Withdraw</Tab>
         </TabList>
 
         <TabPanels >
+            <TabPanel>
+                <RegisterTab />
+            </TabPanel>
             <TabPanel>
                 <DepositTab />
             </TabPanel>
@@ -34,6 +41,9 @@ export default function OptionTabs() {
             </TabPanel>
             <TabPanel>
                 <StatusTab />
+            </TabPanel>
+            <TabPanel>
+                <FinishTab />
             </TabPanel>
             <TabPanel>
                 <WithdrawTab />

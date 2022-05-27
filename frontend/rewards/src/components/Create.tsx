@@ -38,6 +38,8 @@ export default function CreateTab() {
       var twID = result.id
       // result.id = 1521567077773058048
 
+      sendUCreateNewContest(twID);
+      /*
       ContractInstanceAxios.getContestState(twID)
       .then(response => {
           if(response.data == 0)
@@ -48,6 +50,7 @@ export default function CreateTab() {
       .catch(error => {
         alert(error)
       })
+      */
   }
 
   function GetEtherBalanceWithAddress()
@@ -66,7 +69,7 @@ export default function CreateTab() {
     <Flex direction="column" align="center" mt="4">
       <Text>Create Tweet URL</Text>
         
-        <Input placeholder="Tweet URL for lottery" w="100%"  
+        <Input placeholder="Tweet URL for reward distribution" w="100%"  
         alignItems="center" onFocus={GetEtherBalanceWithAddress} 
         value={createtwURL} onChange={(e) => {setCreatetwURL(e.target.value)}} />
 

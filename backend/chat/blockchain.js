@@ -81,6 +81,7 @@ blockchain_contract_app.use(bodyParser.json())
 let port = process.env.BACKEND_FRONTEND_PORT || 5000;
 
 router.post("/getContestState", function(req, res) {
+  console.log("getContestState -> ", req.body.tweetID);
   _contract_owner.getContestState(req.body.tweetID)
   .then(state => {
     console.log("success:getContestState:", req.body.tweetID);
@@ -94,6 +95,7 @@ router.post("/getContestState", function(req, res) {
 });
 
 router.post("/getContestRewardAmount", function(req, res) {
+  console.log("getContestRewardAmount -> ", req.body.tweetID);
   _contract_owner.getContestRewardAmount(req.body.tweetID)
   .then(state => {
     res.setHeader("Access-Control-Allow-Origin", "*")
@@ -106,6 +108,7 @@ router.post("/getContestRewardAmount", function(req, res) {
 });
 
 router.post("/getRewardBalanceWithTwitterID", function(req, res) {
+  console.log("getRewardBalanceWithTwitterID -> ", req.body.tweetID);
   _contract_owner.getRewardBalanceWithTwitterID(req.body.tweetID)
   .then(state => {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -118,6 +121,7 @@ router.post("/getRewardBalanceWithTwitterID", function(req, res) {
 });
 
 router.post("/getRandomSeed", function(req, res) {
+  console.log("getRandomSeed -> ", req.body.tweetID);
   _contract_owner.getRandomSeed(req.body.tweetID)
   .then(state => {
     res.setHeader("Access-Control-Allow-Origin", "*")
@@ -130,6 +134,7 @@ router.post("/getRandomSeed", function(req, res) {
 });
 
 router.post("/getProofLocation", function(req, res) {
+  console.log("getProofLocation -> ", req.body.tweetID);
   _contract_owner.getProofLocation(req.body.tweetID)
   .then(state => {
     res.setHeader("Access-Control-Allow-Origin", "*")

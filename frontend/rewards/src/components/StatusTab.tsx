@@ -60,9 +60,10 @@ export default function StatusTab() {
             <Input placeholder="Check Tweet URL Reward Status" w="100%" 
                         value={statustwURL} onChange={(e) => {setStatustwURL(e.target.value)}} />
                 {/*<Input placeholder="state" w="30%" value={contestState} />*/}
-                <Link href={"https://rinkeby.etherscan.io/address/" + rewardContractAddress + "#readContract"} isExternal> Etherscan Manual Check <ExternalLinkIcon mx="2px" /></Link>
+                <Link mt={3} href={"https://rinkeby.etherscan.io/address/" + rewardContractAddress + "#readContract"} isExternal> Etherscan Manual Check <ExternalLinkIcon mx="2px" /></Link>
                 <p></p>
-                <Button mt={4} colorScheme='teal' leftIcon={<ArrowRightIcon />} onClick={getContestState}> Check Status</Button>
+                <Button mt={4} colorScheme='teal' leftIcon={<ArrowRightIcon />} 
+                    onClick={getContestState}> Check Status</Button>
                 <Divider orientation='horizontal' mb={3} mt={3} w="100%"/>
                 <List spacing={4}>
                     <ListItem>
@@ -86,12 +87,12 @@ export default function StatusTab() {
                         <Link href={contestState >= 4 ? "https://" + proofIPFSHash + ".ipfs.dweb.link" : "" } isExternal> IPFS Proof Review <ExternalLinkIcon mx="2px" /></Link>
                     </ListItem>
                     <ListItem>
-                        <ListIcon as={contestState >= 5 ? CheckIcon : CloseIcon} color={contestState >= 5 ? 'green.500' : 'red.500'} />
-                        Winner can withdraw rewards with Twitter DM.
+                        <ListIcon as={contestState >= 4 ? CheckIcon : CloseIcon} color={contestState >= 4 ? 'green.500' : 'red.500'} />
+                        Winner can withdraw rewards using Withdraw Tab or Twitter DM.
                     </ListItem>
                     <ListItem>
                         <ListIcon as={contestState >= 6 ? CheckIcon : CloseIcon} color={contestState >= 5 ? 'green.500' : 'red.500'} />
-                        Contest Finished.
+                        Contest ended, rewards distributed.
                     </ListItem>
                 </List>
       </Flex>

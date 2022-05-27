@@ -33,8 +33,6 @@ export function getEtherBalanceWithAddress(address : string) {
 */
 
 export function UseDepositEther() {
-    //const contract = new Contract("0x7Aa5062CccD6d3240C42024daF554669A84550b9", rewardContractABI);
-
     const { state, send } = useContractFunction(contract, "depositEther", {});
     
     return { state, send }
@@ -50,6 +48,19 @@ export function UseUCreateNewContest() {
 
   return {state, send};
 }
+
+export function UseRequestProofFromNode() {
+  const {state, send} = useContractFunction(contract, "requestProofFromNode", {});
+  
+  return {state, send};
+}
+
+export function UseWithdrawWinnerReward() {
+  const {state, send} = useContractFunction(contract, "withdrawWinnerReward", {});
+  
+  return {state, send};
+}
+
 
 export function useContractMethod(methodName: string) {
     const { state, send } = useContractFunction(contract, methodName, {});
